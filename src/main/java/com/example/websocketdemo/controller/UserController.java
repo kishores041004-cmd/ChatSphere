@@ -1,8 +1,10 @@
 package com.example.websocketdemo.controller;
 
 import com.example.websocketdemo.model.User;
+import com.example.websocketdemo.model.ChatRoom;
 import com.example.websocketdemo.repository.UserRepository;
 import com.example.websocketdemo.repository.ChatMessageRepository;
+import com.example.websocketdemo.repository.ChatRoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,8 +15,10 @@ import javax.servlet.http.HttpSession;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -25,6 +29,9 @@ public class UserController {
 
     @Autowired
     private ChatMessageRepository chatMessageRepository;
+
+    @Autowired
+    private ChatRoomRepository chatRoomRepository;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserDto userDto) {
@@ -97,7 +104,49 @@ public class UserController {
 
     @GetMapping("/history")
     public ResponseEntity<?> getHistory() {
-        return ResponseEntity.ok(chatMessageRepository.findAll());
+        return ResponseEntity.ok(chatMessageRepository.findByRoomIdIsNull());
+    }
+
+    @GetMapping("/history/{roomId}")
+    public ResponseEntity<?> getRoomHistory(@PathVariable Long roomId) {
+        return ResponseEntity.ok(chatMessageRepository.findByRoomId(roomId));
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<?> getAllUsers() {
+        return ResponseEntity.ok(userRepository.findAll().stream()
+                .map(User::getUsername)
+                .collect(Collectors.toList()));
+    }
+
+    @GetMapping("/rooms")
+    public ResponseEntity<?> getMyRooms(HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Not logged in"));
+        }
+        return ResponseEntity.ok(chatRoomRepository.findRoomsForUser(username.toLowerCase()));
+    }
+
+    @PostMapping("/rooms")
+    public ResponseEntity<?> createRoom(@RequestBody RoomDto roomDto, HttpSession session) {
+        String creator = (String) session.getAttribute("username");
+        if (creator == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Not logged in"));
+        }
+        if (roomDto.getName() == null || roomDto.getName().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Room name cannot be empty"));
+        }
+        
+        ChatRoom room = new ChatRoom(roomDto.getName().trim(), creator);
+        room.getMembers().add(creator.toLowerCase());
+        if (roomDto.getMembers() != null) {
+            for (String member : roomDto.getMembers()) {
+                room.getMembers().add(member.trim().toLowerCase());
+            }
+        }
+        chatRoomRepository.save(room);
+        return ResponseEntity.ok(room);
     }
 
     @GetMapping("/active-users")
@@ -139,6 +188,27 @@ public class UserController {
 
         public void setPassword(String password) {
             this.password = password;
+        }
+    }
+
+    public static class RoomDto {
+        private String name;
+        private List<String> members;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public List<String> getMembers() {
+            return members;
+        }
+
+        public void setMembers(List<String> members) {
+            this.members = members;
         }
     }
 }

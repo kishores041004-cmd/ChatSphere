@@ -553,3 +553,128 @@ button.accent {
     flex: 1;
     margin-right: 5px;
 }
+
+/* Modal overlays & Group creation styling */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease;
+}
+
+.modal-content {
+    background-color: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 450px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    color: var(--text-color);
+    position: relative;
+    box-sizing: border-box;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.close-modal {
+    color: var(--connecting-color);
+    transition: color 0.2s ease;
+}
+
+.close-modal:hover {
+    color: var(--accent-color);
+}
+
+.checkbox-list {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 4px;
+    background-color: var(--bg-color);
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.checkbox-item input {
+    margin-right: 10px;
+    cursor: pointer;
+    width: auto;
+    min-height: auto;
+}
+
+/* Rooms & Groups Sidebar List */
+#rooms-list li {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--text-color);
+}
+
+#rooms-list li:hover {
+    background-color: var(--message-hover-bg);
+}
+
+#rooms-list li.active-room {
+    background-color: var(--border-color);
+    border-left: 4px solid var(--primary-color);
+    font-weight: bold;
+}
+
+.room-unread-badge {
+    background-color: #2ec4b6;
+    color: #fff;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    min-width: 18px;
+    text-align: center;
+}
+
+.room-name-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.room-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}

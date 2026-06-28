@@ -26,14 +26,24 @@ var username = null;
 var authMode = 'login'; // 'login' or 'register'
 
 // Active Users Sidebar & Typing Selectors
-var onlineCountSpan = document.querySelector('#online-count');
-var activeUsersList = document.querySelector('#active-users-list');
 var typingIndicator = document.querySelector('#typing-indicator');
-
-var activeUsersSet = new Set();
 var activeTypers = new Set();
 var isTyping = false;
 var typingTimeout = null;
+
+// Group & Room Selectors & Variables
+var roomsList = document.querySelector('#rooms-list');
+var newGroupBtn = document.querySelector('#new-group-btn');
+var newGroupModal = document.querySelector('#new-group-modal');
+var closeGroupModal = document.querySelector('#close-group-modal');
+var cancelGroupBtn = document.querySelector('#cancel-group-btn');
+var newGroupForm = document.querySelector('#new-group-form');
+var groupNameInput = document.querySelector('#group-name');
+var membersCheckboxList = document.querySelector('#members-checkbox-list');
+
+var currentRoomId = null; // null represents the Public Chat
+var rooms = [];
+var unreadCounts = {};
 
 // Theme Management Logic
 var themeToggleAuth = document.querySelector('#theme-toggle-auth');
@@ -234,7 +244,7 @@ function enterChatRoom(user) {
             console.error('Could not load chat history:', err);
         })
         .finally(function() {
-            loadActiveUsers();
+            loadMyRooms();
             var socket = new SockJS('/ws');
             stompClient = Stomp.over(socket);
 
@@ -268,7 +278,8 @@ function sendMessage(event) {
         var chatMessage = {
             sender: username,
             content: messageInput.value,
-            type: 'CHAT'
+            type: 'CHAT',
+            roomId: currentRoomId
         };
 
         stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
@@ -280,7 +291,8 @@ function sendMessage(event) {
             stompClient.send("/app/chat.typing", {}, JSON.stringify({
                 sender: username,
                 type: 'TYPING',
-                content: 'STOP'
+                content: 'STOP',
+                roomId: currentRoomId
             }));
             isTyping = false;
         }
@@ -295,7 +307,8 @@ messageInput.addEventListener('input', function() {
         stompClient.send("/app/chat.typing", {}, JSON.stringify({
             sender: username,
             type: 'TYPING',
-            content: 'START'
+            content: 'START',
+            roomId: currentRoomId
         }));
     }
     
@@ -305,7 +318,8 @@ messageInput.addEventListener('input', function() {
             stompClient.send("/app/chat.typing", {}, JSON.stringify({
                 sender: username,
                 type: 'TYPING',
-                content: 'STOP'
+                content: 'STOP',
+                roomId: currentRoomId
             }));
             isTyping = false;
         }
@@ -395,7 +409,9 @@ function onMessageReceived(payload) {
     var message = JSON.parse(payload.body);
 
     if (message.type === 'TYPING') {
-        handleTypingEvent(message);
+        if (message.roomId === currentRoomId) {
+            handleTypingEvent(message);
+        }
         return;
     }
 
@@ -416,52 +432,235 @@ function onMessageReceived(payload) {
         return;
     }
 
-    if (message.type === 'JOIN') {
-        if (message.content === tempId) {
+    if (message.type === 'JOIN' || message.type === 'LEAVE') {
+        if (message.type === 'JOIN' && message.content === tempId) {
             username = message.sender;
             sessionStorage.setItem('chatUsername', username);
             loggedInUserSpan.textContent = username;
         }
-        activeUsersSet.add(message.sender);
-        renderActiveUsers();
-    } else if (message.type === 'LEAVE') {
-        activeUsersSet.delete(message.sender);
-        renderActiveUsers();
+        if (currentRoomId === null) {
+            renderMessage(message);
+        }
+        return;
     }
 
-    renderMessage(message);
+    if (message.type === 'CHAT') {
+        if (message.roomId === currentRoomId) {
+            renderMessage(message);
+        } else {
+            var key = message.roomId === null ? 'public' : message.roomId;
+            unreadCounts[key] = (unreadCounts[key] || 0) + 1;
+            renderRoomsList();
+        }
+    }
 }
 
-// Active Users Helpers
-function loadActiveUsers() {
-    fetch('/api/active-users')
+// Rooms & Groups Helpers
+function loadMyRooms(callback) {
+    fetch('/api/rooms')
         .then(function(response) {
             if (response.ok) {
-                return response.json().then(function(users) {
-                    activeUsersSet = new Set(users);
-                    renderActiveUsers();
+                return response.json().then(function(loadedRooms) {
+                    rooms = loadedRooms;
+                    renderRoomsList();
+                    if (callback) callback();
                 });
             }
         })
         .catch(function(err) {
-            console.error('Could not load active users list:', err);
+            console.error('Could not load rooms list:', err);
         });
 }
 
-function renderActiveUsers() {
-    if (!activeUsersList) return;
-    activeUsersList.innerHTML = '';
+function renderRoomsList() {
+    if (!roomsList) return;
+    roomsList.innerHTML = '';
     
-    var sortedUsers = Array.from(activeUsersSet).sort();
-    sortedUsers.forEach(function(user) {
-        var li = document.createElement('li');
-        li.textContent = user;
-        activeUsersList.appendChild(li);
-    });
-    
-    if (onlineCountSpan) {
-        onlineCountSpan.textContent = activeUsersSet.size;
+    // 1. Public Chat Room
+    var publicLi = document.createElement('li');
+    if (currentRoomId === null) {
+        publicLi.classList.add('active-room');
     }
+    
+    var nameWrapper = document.createElement('div');
+    nameWrapper.classList.add('room-name-wrapper');
+    
+    var icon = document.createElement('div');
+    icon.classList.add('room-icon');
+    icon.textContent = '#';
+    
+    var nameText = document.createElement('span');
+    nameText.textContent = 'Public Chat';
+    
+    nameWrapper.appendChild(icon);
+    nameWrapper.appendChild(nameText);
+    publicLi.appendChild(nameWrapper);
+    
+    if (unreadCounts['public'] && unreadCounts['public'] > 0) {
+        var badge = document.createElement('span');
+        badge.classList.add('room-unread-badge');
+        badge.textContent = unreadCounts['public'];
+        publicLi.appendChild(badge);
+    }
+    
+    publicLi.addEventListener('click', function() {
+        selectRoom(null, 'Public Chat');
+    });
+    roomsList.appendChild(publicLi);
+    
+    // 2. Custom Group Rooms
+    rooms.forEach(function(room) {
+        var roomLi = document.createElement('li');
+        if (currentRoomId === room.id) {
+            roomLi.classList.add('active-room');
+        }
+        
+        var rNameWrapper = document.createElement('div');
+        rNameWrapper.classList.add('room-name-wrapper');
+        
+        var rIcon = document.createElement('div');
+        rIcon.classList.add('room-icon');
+        rIcon.textContent = room.name[0] || 'G';
+        
+        var rNameText = document.createElement('span');
+        rNameText.textContent = room.name;
+        
+        rNameWrapper.appendChild(rIcon);
+        rNameWrapper.appendChild(rNameText);
+        roomLi.appendChild(rNameWrapper);
+        
+        if (unreadCounts[room.id] && unreadCounts[room.id] > 0) {
+            var rBadge = document.createElement('span');
+            rBadge.classList.add('room-unread-badge');
+            rBadge.textContent = unreadCounts[room.id];
+            roomLi.appendChild(rBadge);
+        }
+        
+        roomLi.addEventListener('click', function() {
+            selectRoom(room.id, room.name);
+        });
+        roomsList.appendChild(roomLi);
+    });
+}
+
+function selectRoom(roomId, roomName) {
+    currentRoomId = roomId;
+    
+    var key = roomId === null ? 'public' : roomId;
+    unreadCounts[key] = 0;
+    
+    renderRoomsList();
+    
+    var chatHeaderH2 = document.querySelector('.chat-header h2');
+    if (chatHeaderH2) {
+        chatHeaderH2.textContent = roomName;
+    }
+    
+    var historyUrl = roomId === null ? '/api/history' : '/api/history/' + roomId;
+    
+    fetch(historyUrl)
+        .then(function(response) {
+            if (response.ok) {
+                return response.json().then(function(messages) {
+                    messageArea.innerHTML = '';
+                    messages.forEach(function(msg) {
+                        renderMessage(msg);
+                    });
+                });
+            }
+        })
+        .catch(function(err) {
+            console.error('Could not load room chat history:', err);
+        });
+}
+
+// Group Creation Modal Event Listeners
+if (newGroupBtn) {
+    newGroupBtn.addEventListener('click', function() {
+        fetch('/api/users')
+            .then(function(response) {
+                if (response.ok) {
+                    return response.json().then(function(users) {
+                        membersCheckboxList.innerHTML = '';
+                        var filteredUsers = users.filter(function(u) {
+                            return u.toLowerCase() !== username.toLowerCase();
+                        });
+                        
+                        if (filteredUsers.length === 0) {
+                            membersCheckboxList.innerHTML = '<div style="font-size:12px;color:#777;padding:5px 0;">No other users registered yet.</div>';
+                        } else {
+                            filteredUsers.forEach(function(u) {
+                                var label = document.createElement('label');
+                                label.classList.add('checkbox-item');
+                                
+                                var checkbox = document.createElement('input');
+                                checkbox.type = 'checkbox';
+                                checkbox.value = u;
+                                checkbox.name = 'members';
+                                
+                                label.appendChild(checkbox);
+                                label.appendChild(document.createTextNode(u));
+                                membersCheckboxList.appendChild(label);
+                            });
+                        }
+                        newGroupModal.classList.remove('hidden');
+                    });
+                }
+            })
+            .catch(function(err) {
+                console.error('Could not load users list:', err);
+            });
+    });
+}
+
+function closeModal() {
+    newGroupModal.classList.add('hidden');
+    newGroupForm.reset();
+}
+
+if (closeGroupModal) closeGroupModal.addEventListener('click', closeModal);
+if (cancelGroupBtn) cancelGroupBtn.addEventListener('click', closeModal);
+
+if (newGroupForm) {
+    newGroupForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        var roomName = groupNameInput.value.trim();
+        if (!roomName) return;
+        
+        var selectedMembers = [];
+        var checkboxes = membersCheckboxList.querySelectorAll('input[type="checkbox"]:checked');
+        checkboxes.forEach(function(cb) {
+            selectedMembers.push(cb.value);
+        });
+        
+        fetch('/api/rooms', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: roomName,
+                members: selectedMembers
+            })
+        })
+        .then(function(response) {
+            if (response.ok) {
+                return response.json().then(function(newRoom) {
+                    closeModal();
+                    loadMyRooms(function() {
+                        selectRoom(newRoom.id, newRoom.name);
+                    });
+                });
+            } else {
+                return response.json().then(function(err) {
+                    alert(err.message || 'Could not create group');
+                });
+            }
+        })
+        .catch(function(err) {
+            console.error('Error creating group:', err);
+        });
+    });
 }
 
 // Typing Indicator Helpers

@@ -112,6 +112,7 @@ public class ChatController {
         
         ChatMessage response = new ChatMessage();
         response.setId(chatMessage.getId());
+        response.setRoomId(existing.getRoomId());
         response.setType(ChatMessage.MessageType.DELETE);
         return response;
     }
