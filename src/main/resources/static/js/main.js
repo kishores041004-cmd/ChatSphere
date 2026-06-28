@@ -585,10 +585,13 @@ function selectRoom(roomId, roomName) {
         chatHeaderH2.textContent = roomName;
     }
     
+    var chatHeader = document.querySelector('.chat-header');
     if (roomId === null) {
         if (roomInfoBtn) roomInfoBtn.classList.add('hidden');
+        if (chatHeader) chatHeader.style.cursor = 'default';
     } else {
         if (roomInfoBtn) roomInfoBtn.classList.remove('hidden');
+        if (chatHeader) chatHeader.style.cursor = 'pointer';
     }
     
     var historyUrl = roomId === null ? '/api/history' : '/api/history/' + roomId;
@@ -1057,6 +1060,19 @@ if (exitGroupBtn) {
                     loadMyRooms();
                 }
             });
+        }
+    });
+}
+
+// Make the chat header clickable to open Group Details when inside a custom group
+var chatHeaderElement = document.querySelector('.chat-header');
+if (chatHeaderElement) {
+    chatHeaderElement.addEventListener('click', function(e) {
+        if (e.target.closest('#logout-link') || e.target.closest('#theme-toggle-chat') || e.target.closest('#room-info-btn')) {
+            return;
+        }
+        if (currentRoomId !== null) {
+            if (roomInfoBtn) roomInfoBtn.click();
         }
     });
 }
