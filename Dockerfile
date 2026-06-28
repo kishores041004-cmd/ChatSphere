@@ -8,7 +8,6 @@ RUN mvn clean package -DskipTests
 FROM openjdk:11-jre-slim
 WORKDIR /app
 COPY --from=build /app/target/websocket-demo-0.0.1-SNAPSHOT.jar websocket-demo.jar
-VOLUME /tmp
 EXPOSE 8080
 ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","websocket-demo.jar"]
 
