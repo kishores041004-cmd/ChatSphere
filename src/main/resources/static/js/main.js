@@ -490,7 +490,7 @@ function renderRoomsList() {
     icon.textContent = '#';
     
     var nameText = document.createElement('span');
-    nameText.textContent = 'Public Chat';
+    nameText.textContent = '01. Random Group';
     
     nameWrapper.appendChild(icon);
     nameWrapper.appendChild(nameText);
@@ -504,12 +504,12 @@ function renderRoomsList() {
     }
     
     publicLi.addEventListener('click', function() {
-        selectRoom(null, 'Public Chat');
+        selectRoom(null, '01. Random Group');
     });
     roomsList.appendChild(publicLi);
     
     // 2. Custom Group Rooms
-    rooms.forEach(function(room) {
+    rooms.forEach(function(room, index) {
         var roomLi = document.createElement('li');
         if (currentRoomId === room.id) {
             roomLi.classList.add('active-room');
@@ -522,8 +522,11 @@ function renderRoomsList() {
         rIcon.classList.add('room-icon');
         rIcon.textContent = room.name[0] || 'G';
         
+        var displayNum = String(index + 2).padStart(2, '0');
+        var displayName = displayNum + '. ' + room.name;
+        
         var rNameText = document.createElement('span');
-        rNameText.textContent = room.name;
+        rNameText.textContent = displayName;
         
         rNameWrapper.appendChild(rIcon);
         rNameWrapper.appendChild(rNameText);
@@ -537,7 +540,7 @@ function renderRoomsList() {
         }
         
         roomLi.addEventListener('click', function() {
-            selectRoom(room.id, room.name);
+            selectRoom(room.id, displayName);
         });
         roomsList.appendChild(roomLi);
     });
