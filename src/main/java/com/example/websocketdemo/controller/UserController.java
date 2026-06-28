@@ -1,54 +1,30 @@
 package com.example.websocketdemo.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.websocketdemo.model.User;
+import com.example.websocketdemo.repository.UserRepository;
+import com.example.websocketdemo.repository.ChatMessageRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
-import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
 public class UserController {
 
-    // Simple thread-safe registry of username -> hashed password
-    private static final Map<String, String> userRegistry = new ConcurrentHashMap<>();
-    private static final String DATA_DIR = System.getenv("DATA_DIR") != null ? System.getenv("DATA_DIR") : "";
-    private static final String USERS_FILE_PATH = DATA_DIR.isEmpty() ? "users.json" : (DATA_DIR + "/users.json");
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private UserRepository userRepository;
 
-    static {
-        loadUsers();
-    }
-
-    private static synchronized void loadUsers() {
-        File file = new File(USERS_FILE_PATH);
-        if (file.exists()) {
-            try {
-                Map<String, String> loaded = objectMapper.readValue(file, new TypeReference<Map<String, String>>() {});
-                userRegistry.putAll(loaded);
-            } catch (IOException e) {
-                System.err.println("Could not load users: " + e.getMessage());
-            }
-        }
-    }
-
-    private static synchronized void saveUsers() {
-        try {
-            objectMapper.writeValue(new File(USERS_FILE_PATH), userRegistry);
-        } catch (IOException e) {
-            System.err.println("Could not save users: " + e.getMessage());
-        }
-    }
+    @Autowired
+    private ChatMessageRepository chatMessageRepository;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserDto userDto) {
@@ -60,14 +36,13 @@ public class UserController {
         }
 
         username = username.trim();
-        if (userRegistry.containsKey(username.toLowerCase())) {
+        if (userRepository.findByUsername(username.toLowerCase()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Username already exists"));
         }
 
         // Hash and store the password
         String hashedPassword = hashPassword(password);
-        userRegistry.put(username.toLowerCase(), hashedPassword);
-        saveUsers();
+        userRepository.save(new User(username.toLowerCase(), hashedPassword));
 
         return ResponseEntity.ok(Map.of("message", "Registration successful"));
     }
@@ -84,8 +59,8 @@ public class UserController {
         username = username.trim();
         String hashedPassword = hashPassword(password);
 
-        String storedPassword = userRegistry.get(username.toLowerCase());
-        if (storedPassword == null || !storedPassword.equals(hashedPassword)) {
+        Optional<User> userOpt = userRepository.findByUsername(username.toLowerCase());
+        if (userOpt.isEmpty() || !userOpt.get().getPassword().equals(hashedPassword)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid username or password"));
         }
 
@@ -113,7 +88,7 @@ public class UserController {
 
     @GetMapping("/history")
     public ResponseEntity<?> getHistory() {
-        return ResponseEntity.ok(ChatHistoryRegistry.getHistory());
+        return ResponseEntity.ok(chatMessageRepository.findAll());
     }
 
     private String hashPassword(String password) {
