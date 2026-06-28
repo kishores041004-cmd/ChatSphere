@@ -314,6 +314,9 @@ messageInput.addEventListener('input', function() {
 
 function renderMessage(message) {
     var messageElement = document.createElement('li');
+    if (message.id) {
+        messageElement.setAttribute('data-id', message.id);
+    }
 
     if(message.type === 'JOIN') {
         messageElement.classList.add('event-message');
@@ -339,8 +342,43 @@ function renderMessage(message) {
 
         var timestampElement = document.createElement('span');
         timestampElement.classList.add('message-timestamp');
-        timestampElement.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        var msgTime = message.createdAt ? new Date(message.createdAt) : new Date();
+        timestampElement.textContent = msgTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         messageElement.appendChild(timestampElement);
+
+        // Add Edit and Delete action controls for current user's messages within 5 mins
+        if (message.sender === username && message.id) {
+            var actionsDiv = document.createElement('div');
+            actionsDiv.classList.add('message-actions');
+            
+            var editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.classList.add('edit-msg-btn');
+            editBtn.addEventListener('click', function() {
+                initiateEditMessage(message.id);
+            });
+            
+            var deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.classList.add('delete-msg-btn');
+            deleteBtn.addEventListener('click', function() {
+                requestDeleteMessage(message.id);
+            });
+            
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(deleteBtn);
+            messageElement.appendChild(actionsDiv);
+            
+            var sendTime = message.createdAt || Date.now();
+            var remainingTime = 5 * 60 * 1000 - (Date.now() - sendTime);
+            if (remainingTime > 0) {
+                setTimeout(function() {
+                    if (actionsDiv) actionsDiv.remove();
+                }, remainingTime);
+            } else {
+                actionsDiv.style.display = 'none';
+            }
+        }
     }
 
     var textElement = document.createElement('p');
@@ -358,6 +396,23 @@ function onMessageReceived(payload) {
 
     if (message.type === 'TYPING') {
         handleTypingEvent(message);
+        return;
+    }
+
+    if (message.type === 'EDIT') {
+        var messageLi = document.querySelector('li[data-id="' + message.id + '"]');
+        if (messageLi) {
+            var p = messageLi.querySelector('p');
+            if (p) p.textContent = message.content;
+        }
+        return;
+    }
+
+    if (message.type === 'DELETE') {
+        var messageLi = document.querySelector('li[data-id="' + message.id + '"]');
+        if (messageLi) {
+            messageLi.remove();
+        }
         return;
     }
 
@@ -503,5 +558,86 @@ if (storedUser) {
                     });
                 }
             });
+    }
+}
+
+// Edit/Delete Message Operations
+function initiateEditMessage(messageId) {
+    var messageLi = document.querySelector('li[data-id="' + messageId + '"]');
+    if (!messageLi) return;
+    var p = messageLi.querySelector('p');
+    var originalContent = p.textContent;
+    
+    var actions = messageLi.querySelector('.message-actions');
+    if (actions) actions.style.display = 'none';
+    
+    p.style.display = 'none';
+    
+    var editContainer = document.createElement('div');
+    editContainer.classList.add('edit-container');
+    
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.value = originalContent;
+    input.classList.add('form-control');
+    
+    var saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save';
+    saveBtn.classList.add('primary');
+    saveBtn.style.padding = '5px 10px';
+    saveBtn.style.marginRight = '5px';
+    saveBtn.style.minHeight = 'auto';
+    saveBtn.style.height = 'auto';
+    saveBtn.style.width = 'auto';
+    
+    var cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.padding = '5px 10px';
+    cancelBtn.style.minHeight = 'auto';
+    cancelBtn.style.height = 'auto';
+    cancelBtn.style.width = 'auto';
+    
+    editContainer.appendChild(input);
+    editContainer.appendChild(saveBtn);
+    editContainer.appendChild(cancelBtn);
+    
+    messageLi.appendChild(editContainer);
+    input.focus();
+    
+    saveBtn.addEventListener('click', function() {
+        var newContent = input.value.trim();
+        if (newContent && newContent !== originalContent) {
+            stompClient.send("/app/chat.editMessage", {}, JSON.stringify({
+                id: messageId,
+                content: newContent,
+                type: 'EDIT'
+            }));
+        }
+        cleanupEdit();
+    });
+    
+    cancelBtn.addEventListener('click', cleanupEdit);
+    
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            saveBtn.click();
+        } else if (e.key === 'Escape') {
+            cancelBtn.click();
+        }
+    });
+    
+    function cleanupEdit() {
+        editContainer.remove();
+        p.style.display = 'block';
+        if (actions) actions.style.display = 'inline-block';
+    }
+}
+
+function requestDeleteMessage(messageId) {
+    if (confirm("Are you sure you want to delete this message?")) {
+        stompClient.send("/app/chat.deleteMessage", {}, JSON.stringify({
+            id: messageId,
+            type: 'DELETE'
+        }));
     }
 }

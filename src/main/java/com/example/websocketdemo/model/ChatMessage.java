@@ -18,14 +18,27 @@ public class ChatMessage {
 
     private String sender;
 
+    @Column(name = "created_at")
+    private Long createdAt = System.currentTimeMillis();
+
     public enum MessageType {
         CHAT,
         JOIN,
         LEAVE,
-        TYPING
+        TYPING,
+        EDIT,
+        DELETE
     }
 
     public ChatMessage() {
+    }
+
+    public Long getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Long createdAt) {
+        this.createdAt = createdAt;
     }
 
     public Long getId() {
