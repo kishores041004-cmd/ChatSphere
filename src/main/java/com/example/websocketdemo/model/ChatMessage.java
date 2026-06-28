@@ -21,6 +21,9 @@ public class ChatMessage {
     @Column(name = "created_at")
     private Long createdAt = System.currentTimeMillis();
 
+    @Column(name = "room_id")
+    private Long roomId;
+
     public enum MessageType {
         CHAT,
         JOIN,
@@ -39,6 +42,14 @@ public class ChatMessage {
 
     public void setCreatedAt(Long createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Long getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(Long roomId) {
+        this.roomId = roomId;
     }
 
     public Long getId() {
