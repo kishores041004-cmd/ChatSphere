@@ -59,6 +59,14 @@ public class WebsocketDemoApplication {
 		System.out.println("Database: " + db);
 		System.out.println("Username: " + user);
 		System.out.println("Password Length: " + (password != null ? password.length() : 0));
+		
+		System.out.println("Environment Variables starting with MYSQL:");
+		for (String key : System.getenv().keySet()) {
+			if (key.contains("MYSQL") || key.contains("PASS") || key.contains("PORT")) {
+				String val = System.getenv(key);
+				System.out.println("  - " + key + " (length: " + (val != null ? val.length() : 0) + ")");
+			}
+		}
 
 		try (Connection conn = DriverManager.getConnection(url, user, password)) {
 			System.out.println("=== DATABASE CONNECTION TEST SUCCESSFUL ===");
