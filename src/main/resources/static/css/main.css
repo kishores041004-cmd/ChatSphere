@@ -1,3 +1,29 @@
+:root {
+    --bg-color: #f4f4f4;
+    --card-bg-color: #fff;
+    --text-color: #333;
+    --border-color: #ececec;
+    --primary-color: #128ff2;
+    --accent-color: #ff4743;
+    --header-bg-color: #fff;
+    --sidebar-bg-color: #fff;
+    --connecting-color: #777;
+    --message-hover-bg: #f9f9f9;
+}
+
+.dark-theme {
+    --bg-color: #0c0f17;
+    --card-bg-color: #131924;
+    --text-color: #e2e8f0;
+    --border-color: #212d3e;
+    --primary-color: #38bdf8;
+    --accent-color: #ff4743;
+    --header-bg-color: #1a2232;
+    --sidebar-bg-color: #161e2b;
+    --connecting-color: #94a3b8;
+    --message-hover-bg: #1b2637;
+}
+
 * {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
@@ -16,9 +42,10 @@ body {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 1rem;
     line-height: 1.58;
-    color: #333;
-    background-color: #f4f4f4;
+    color: var(--text-color);
+    background-color: var(--bg-color);
     height: 100%;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body:before {
@@ -27,9 +54,10 @@ body:before {
     position: absolute;
     top: 0;
     left: 0;
-    background: #128ff2;
+    background: var(--primary-color);
     content: "";
     z-index: 0;
+    transition: background 0.3s ease;
 }
 
 .clearfix:after {
@@ -46,7 +74,9 @@ body:before {
     width: 100%;
     min-height: 38px;
     font-size: 15px;
-    border: 1px solid #c8c8c8;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg-color);
+    color: var(--text-color);
 }
 
 .form-group {
@@ -109,9 +139,10 @@ button.accent {
 }
 
 .username-page-container {
-    background: #fff;
-    box-shadow: 0 1px 11px rgba(0, 0, 0, 0.27);
-    border-radius: 2px;
+    background: var(--card-bg-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
     width: 100%;
     max-width: 500px;
     display: inline-block;
@@ -126,6 +157,7 @@ button.accent {
     right: 0;
     margin: 0 auto;
     margin-top: -160px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .username-page-container .username-submit {
@@ -170,20 +202,24 @@ button.accent {
 }
 
 .chat-container {
-    max-width: 700px;
+    max-width: 900px;
     margin-left: auto;
     margin-right: auto;
-    background-color: #fff;
-    box-shadow: 0 1px 11px rgba(0, 0, 0, 0.27);
+    background-color: var(--card-bg-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
     margin-top: 30px;
     height: calc(100% - 60px);
     max-height: 600px;
     position: relative;
+    overflow: hidden;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 #chat-page ul {
     list-style-type: none;
-    background-color: #FFF;
+    background-color: var(--card-bg-color);
     margin: 0;
     overflow: auto;
     overflow-y: scroll;
@@ -193,13 +229,15 @@ button.accent {
 
 #chat-page #messageForm {
     padding: 20px;
+    background-color: var(--card-bg-color);
 }
 
 #chat-page ul li {
     line-height: 1.5rem;
     padding: 10px 20px;
     margin: 0;
-    border-bottom: 1px solid #f4f4f4;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s ease;
 }
 
 #chat-page ul li p {
@@ -213,7 +251,7 @@ button.accent {
 }
 
 #chat-page .event-message p {
-    color: #777;
+    color: var(--connecting-color);
     font-size: 14px;
     word-wrap: break-word;
 }
@@ -241,12 +279,12 @@ button.accent {
 }
 
 #chat-page .chat-message span {
-    color: #333;
+    color: var(--primary-color);
     font-weight: 600;
 }
 
 #chat-page .chat-message p {
-    color: #43464b;
+    color: var(--text-color);
 }
 
 #messageForm .input-group input {
@@ -264,18 +302,21 @@ button.accent {
 .chat-header {
     text-align: center;
     padding: 15px;
-    border-bottom: 1px solid #ececec;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--header-bg-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .chat-header h2 {
     margin: 0;
     font-weight: 500;
+    color: var(--text-color);
 }
 
 .connecting {
     padding-top: 5px;
     text-align: center;
-    color: #777;
+    color: var(--connecting-color);
     position: absolute;
     top: 65px;
     width: 100%;
@@ -325,5 +366,138 @@ button.accent {
 
     .chat-header h2 {
         font-size: 1.1em;
+    }
+}
+
+/* ==========================================================================
+   ChatSphere Feature Upgrades (Dark Mode, Sidebar, Typing, Timestamps)
+   ========================================================================== */
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: var(--text-color);
+    border-radius: 50%;
+    transition: background-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    min-height: auto;
+    width: auto;
+    height: auto;
+    box-shadow: none;
+}
+
+.theme-toggle-btn:hover {
+    background-color: var(--border-color);
+    transform: rotate(15deg);
+    color: var(--primary-color);
+}
+
+.chat-theme-toggle {
+    top: 18px;
+    right: 18px;
+}
+
+/* Chat Main Layout */
+.chat-main {
+    display: flex;
+    height: calc(100% - 150px);
+    border-bottom: 1px solid var(--border-color);
+}
+
+#chat-page ul {
+    flex: 1;
+    height: 100% !important;
+    background-color: var(--card-bg-color);
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: 200px;
+    height: 100%;
+    border-left: 1px solid var(--border-color);
+    background-color: var(--sidebar-bg-color);
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.sidebar-header {
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: bold;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
+    background-color: var(--header-bg-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+#active-users-list {
+    list-style: none;
+    padding: 10px 15px !important;
+    margin: 0;
+    overflow-y: auto;
+    height: calc(100% - 38px);
+}
+
+#active-users-list li {
+    padding: 8px 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    color: var(--text-color);
+    border-bottom: none !important;
+}
+
+#active-users-list li:before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #2ec4b6;
+    margin-right: 10px;
+}
+
+/* Typing Indicator */
+.typing-indicator {
+    padding: 5px 20px;
+    font-size: 13px;
+    color: var(--connecting-color);
+    font-style: italic;
+    height: 25px;
+    line-height: 15px;
+    background-color: var(--card-bg-color);
+    transition: background-color 0.3s ease;
+}
+
+.hidden-indicator {
+    visibility: hidden;
+}
+
+/* Message Timestamps */
+.message-timestamp {
+    font-size: 11px;
+    color: var(--connecting-color);
+    float: right;
+    margin-top: 3px;
+}
+
+.chat-message:hover {
+    background-color: var(--message-hover-bg);
+}
+
+/* Responsive adjustment for Sidebar */
+@media screen and (max-width: 600px) {
+    .sidebar {
+        display: none; /* Hide sidebar on mobile to preserve chat space */
     }
 }

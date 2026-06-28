@@ -91,6 +91,11 @@ public class UserController {
         return ResponseEntity.ok(chatMessageRepository.findAll());
     }
 
+    @GetMapping("/active-users")
+    public ResponseEntity<?> getActiveUsers() {
+        return ResponseEntity.ok(ActiveUserRegistry.activeUsers);
+    }
+
     private String hashPassword(String password) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

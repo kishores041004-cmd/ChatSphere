@@ -40,5 +40,16 @@ public class ChatController {
         return chatMessage;
     }
 
-}
+    @MessageMapping("/chat.typing")
+    @SendTo("/topic/public")
+    public ChatMessage typing(@Payload ChatMessage chatMessage,
+                              SimpMessageHeaderAccessor headerAccessor) {
+        String username = (String) headerAccessor.getSessionAttributes().get("username");
+        if (username == null) {
+            throw new IllegalStateException("Not authenticated");
+        }
+        chatMessage.setSender(username);
+        return chatMessage;
+    }
 
+}

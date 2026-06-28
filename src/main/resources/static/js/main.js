@@ -25,6 +25,57 @@ var stompClient = null;
 var username = null;
 var authMode = 'login'; // 'login' or 'register'
 
+// Active Users Sidebar & Typing Selectors
+var onlineCountSpan = document.querySelector('#online-count');
+var activeUsersList = document.querySelector('#active-users-list');
+var typingIndicator = document.querySelector('#typing-indicator');
+
+var activeUsersSet = new Set();
+var activeTypers = new Set();
+var isTyping = false;
+var typingTimeout = null;
+
+// Theme Management Logic
+var themeToggleAuth = document.querySelector('#theme-toggle-auth');
+var themeToggleChat = document.querySelector('#theme-toggle-chat');
+
+function setTheme(theme) {
+    if (theme === 'dark') {
+        document.body.classList.add('dark-theme');
+        localStorage.setItem('theme', 'dark');
+        updateThemeToggleIcons('dark');
+    } else {
+        document.body.classList.remove('dark-theme');
+        localStorage.setItem('theme', 'light');
+        updateThemeToggleIcons('light');
+    }
+}
+
+function updateThemeToggleIcons(theme) {
+    var moonIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
+    var sunIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
+    
+    var iconHtml = theme === 'dark' ? sunIcon : moonIcon;
+    if (themeToggleAuth) themeToggleAuth.innerHTML = iconHtml;
+    if (themeToggleChat) themeToggleChat.innerHTML = iconHtml;
+}
+
+var storedTheme = localStorage.getItem('theme');
+if (storedTheme) {
+    setTheme(storedTheme);
+} else {
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(prefersDark ? 'dark' : 'light');
+}
+
+function handleThemeToggle() {
+    var isDark = document.body.classList.contains('dark-theme');
+    setTheme(isDark ? 'light' : 'dark');
+}
+
+if (themeToggleAuth) themeToggleAuth.addEventListener('click', handleThemeToggle);
+if (themeToggleChat) themeToggleChat.addEventListener('click', handleThemeToggle);
+
 var colors = [
     '#2196F3', '#32c787', '#00BCD4', '#ff5652',
     '#ffc107', '#ff85af', '#FF9800', '#39bbb0'
@@ -183,6 +234,7 @@ function enterChatRoom(user) {
             console.error('Could not load chat history:', err);
         })
         .finally(function() {
+            loadActiveUsers();
             var socket = new SockJS('/ws');
             stompClient = Stomp.over(socket);
 
@@ -221,9 +273,44 @@ function sendMessage(event) {
 
         stompClient.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage));
         messageInput.value = '';
+        
+        // Immediately stop typing indicator on send
+        clearTimeout(typingTimeout);
+        if (isTyping) {
+            stompClient.send("/app/chat.typing", {}, JSON.stringify({
+                sender: username,
+                type: 'TYPING',
+                content: 'STOP'
+            }));
+            isTyping = false;
+        }
     }
     event.preventDefault();
 }
+
+// Send Typing indicators
+messageInput.addEventListener('input', function() {
+    if (!isTyping && stompClient) {
+        isTyping = true;
+        stompClient.send("/app/chat.typing", {}, JSON.stringify({
+            sender: username,
+            type: 'TYPING',
+            content: 'START'
+        }));
+    }
+    
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(function() {
+        if (isTyping && stompClient) {
+            stompClient.send("/app/chat.typing", {}, JSON.stringify({
+                sender: username,
+                type: 'TYPING',
+                content: 'STOP'
+            }));
+            isTyping = false;
+        }
+    }, 2000);
+});
 
 function renderMessage(message) {
     var messageElement = document.createElement('li');
@@ -249,6 +336,11 @@ function renderMessage(message) {
         var usernameText = document.createTextNode(senderName);
         usernameElement.appendChild(usernameText);
         messageElement.appendChild(usernameElement);
+
+        var timestampElement = document.createElement('span');
+        timestampElement.classList.add('message-timestamp');
+        timestampElement.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        messageElement.appendChild(timestampElement);
     }
 
     var textElement = document.createElement('p');
@@ -264,14 +356,89 @@ function renderMessage(message) {
 function onMessageReceived(payload) {
     var message = JSON.parse(payload.body);
 
-    // Resolve server-assigned unique name for this tab
-    if (message.type === 'JOIN' && message.content === tempId) {
-        username = message.sender;
-        sessionStorage.setItem('chatUsername', username);
-        loggedInUserSpan.textContent = username;
+    if (message.type === 'TYPING') {
+        handleTypingEvent(message);
+        return;
+    }
+
+    if (message.type === 'JOIN') {
+        if (message.content === tempId) {
+            username = message.sender;
+            sessionStorage.setItem('chatUsername', username);
+            loggedInUserSpan.textContent = username;
+        }
+        activeUsersSet.add(message.sender);
+        renderActiveUsers();
+    } else if (message.type === 'LEAVE') {
+        activeUsersSet.delete(message.sender);
+        renderActiveUsers();
     }
 
     renderMessage(message);
+}
+
+// Active Users Helpers
+function loadActiveUsers() {
+    fetch('/api/active-users')
+        .then(function(response) {
+            if (response.ok) {
+                return response.json().then(function(users) {
+                    activeUsersSet = new Set(users);
+                    renderActiveUsers();
+                });
+            }
+        })
+        .catch(function(err) {
+            console.error('Could not load active users list:', err);
+        });
+}
+
+function renderActiveUsers() {
+    if (!activeUsersList) return;
+    activeUsersList.innerHTML = '';
+    
+    var sortedUsers = Array.from(activeUsersSet).sort();
+    sortedUsers.forEach(function(user) {
+        var li = document.createElement('li');
+        li.textContent = user;
+        activeUsersList.appendChild(li);
+    });
+    
+    if (onlineCountSpan) {
+        onlineCountSpan.textContent = activeUsersSet.size;
+    }
+}
+
+// Typing Indicator Helpers
+function handleTypingEvent(message) {
+    if (message.sender === username) return;
+    
+    if (message.content === 'START') {
+        activeTypers.add(message.sender);
+    } else {
+        activeTypers.delete(message.sender);
+    }
+    
+    renderTypingIndicator();
+}
+
+function renderTypingIndicator() {
+    if (activeTypers.size === 0) {
+        typingIndicator.classList.add('hidden-indicator');
+        typingIndicator.textContent = '';
+    } else {
+        var typersArray = Array.from(activeTypers);
+        var text = '';
+        if (typersArray.length === 1) {
+            text = typersArray[0] + ' is typing...';
+        } else if (typersArray.length === 2) {
+            text = typersArray[0] + ' and ' + typersArray[1] + ' are typing...';
+        } else {
+            text = 'Several people are typing...';
+        }
+        typingIndicator.textContent = text;
+        typingIndicator.classList.remove('hidden-indicator');
+    }
 }
 
 function getAvatarColor(messageSender) {
