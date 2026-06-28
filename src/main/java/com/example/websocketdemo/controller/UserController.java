@@ -164,6 +164,101 @@ public class UserController {
         return ResponseEntity.ok(room);
     }
 
+    @PostMapping("/rooms/{roomId}/description")
+    public ResponseEntity<?> updateDescription(@PathVariable Long roomId, @RequestBody Map<String, String> body, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Not logged in"));
+        }
+        ChatRoom room = chatRoomRepository.findById(roomId).orElse(null);
+        if (room == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Room not found"));
+        }
+        if (!room.getMembers().contains(username.toLowerCase())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Not a member of this group"));
+        }
+        room.setDescription(body.get("description"));
+        chatRoomRepository.save(room);
+
+        // Broadcast updated room creation state so all members reload their view in real-time
+        try {
+            String membersStr = String.join(",", room.getMembers());
+            com.example.websocketdemo.model.ChatMessage broadcast = new com.example.websocketdemo.model.ChatMessage();
+            broadcast.setType(com.example.websocketdemo.model.ChatMessage.MessageType.JOIN);
+            broadcast.setContent("ROOM_CREATED:" + room.getId() + ":" + room.getName() + ":" + membersStr);
+            broadcast.setSender(username);
+            messagingTemplate.convertAndSend("/topic/public", broadcast);
+        } catch (Exception e) {}
+
+        return ResponseEntity.ok(room);
+    }
+
+    @PostMapping("/rooms/{roomId}/members")
+    public ResponseEntity<?> addMembers(@PathVariable Long roomId, @RequestBody Map<String, List<String>> body, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Not logged in"));
+        }
+        ChatRoom room = chatRoomRepository.findById(roomId).orElse(null);
+        if (room == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Room not found"));
+        }
+        if (!room.getMembers().contains(username.toLowerCase())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Not a member of this group"));
+        }
+        List<String> newMembers = body.get("members");
+        if (newMembers != null) {
+            for (String member : newMembers) {
+                room.getMembers().add(member.trim().toLowerCase());
+            }
+        }
+        chatRoomRepository.save(room);
+
+        // Broadcast room creation/update state so new members reload their sidebar in real-time
+        try {
+            String membersStr = String.join(",", room.getMembers());
+            com.example.websocketdemo.model.ChatMessage broadcast = new com.example.websocketdemo.model.ChatMessage();
+            broadcast.setType(com.example.websocketdemo.model.ChatMessage.MessageType.JOIN);
+            broadcast.setContent("ROOM_CREATED:" + room.getId() + ":" + room.getName() + ":" + membersStr);
+            broadcast.setSender(username);
+            messagingTemplate.convertAndSend("/topic/public", broadcast);
+        } catch (Exception e) {}
+
+        return ResponseEntity.ok(room);
+    }
+
+    @PostMapping("/rooms/{roomId}/exit")
+    public ResponseEntity<?> exitRoom(@PathVariable Long roomId, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Not logged in"));
+        }
+        ChatRoom room = chatRoomRepository.findById(roomId).orElse(null);
+        if (room == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Room not found"));
+        }
+        if (!room.getMembers().contains(username.toLowerCase())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Not a member of this group"));
+        }
+        room.getMembers().remove(username.toLowerCase());
+        if (room.getMembers().isEmpty()) {
+            chatRoomRepository.delete(room);
+        } else {
+            chatRoomRepository.save(room);
+            
+            // Broadcast room update state so remaining members update in real-time
+            try {
+                String membersStr = String.join(",", room.getMembers());
+                com.example.websocketdemo.model.ChatMessage broadcast = new com.example.websocketdemo.model.ChatMessage();
+                broadcast.setType(com.example.websocketdemo.model.ChatMessage.MessageType.JOIN);
+                broadcast.setContent("ROOM_CREATED:" + room.getId() + ":" + room.getName() + ":" + membersStr);
+                broadcast.setSender(username);
+                messagingTemplate.convertAndSend("/topic/public", broadcast);
+            } catch (Exception e) {}
+        }
+        return ResponseEntity.ok(Map.of("message", "Exited successfully"));
+    }
+
     @GetMapping("/active-users")
     public ResponseEntity<?> getActiveUsers() {
         return ResponseEntity.ok(ActiveUserRegistry.activeUsers);

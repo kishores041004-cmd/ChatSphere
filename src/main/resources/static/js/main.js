@@ -41,6 +41,23 @@ var newGroupForm = document.querySelector('#new-group-form');
 var groupNameInput = document.querySelector('#group-name');
 var membersCheckboxList = document.querySelector('#members-checkbox-list');
 
+// Group Info Modal Selectors
+var roomInfoBtn = document.querySelector('#room-info-btn');
+var groupInfoModal = document.querySelector('#group-info-modal');
+var closeInfoModal = document.querySelector('#close-info-modal');
+var infoGroupTitle = document.querySelector('#info-group-title');
+var groupDescText = document.querySelector('#group-desc-text');
+var editDescBtn = document.querySelector('#edit-desc-btn');
+var groupDescDisplayWrapper = document.querySelector('#group-desc-display-wrapper');
+var groupDescEditWrapper = document.querySelector('#group-desc-edit-wrapper');
+var groupDescInput = document.querySelector('#group-desc-input');
+var cancelDescBtn = document.querySelector('#cancel-desc-btn');
+var saveDescBtn = document.querySelector('#save-desc-btn');
+var infoMembersList = document.querySelector('#info-members-list');
+var infoAddMembersList = document.querySelector('#info-add-members-list');
+var submitAddMembersBtn = document.querySelector('#submit-add-members-btn');
+var exitGroupBtn = document.querySelector('#exit-group-btn');
+
 var currentRoomId = null; // null represents the Public Chat
 var rooms = [];
 var unreadCounts = {};
@@ -568,6 +585,12 @@ function selectRoom(roomId, roomName) {
         chatHeaderH2.textContent = roomName;
     }
     
+    if (roomId === null) {
+        if (roomInfoBtn) roomInfoBtn.classList.add('hidden');
+    } else {
+        if (roomInfoBtn) roomInfoBtn.classList.remove('hidden');
+    }
+    
     var historyUrl = roomId === null ? '/api/history' : '/api/history/' + roomId;
     
     fetch(historyUrl)
@@ -865,4 +888,175 @@ function requestDeleteMessage(messageId) {
             type: 'DELETE'
         }));
     }
+}
+
+// Group Info Modal Helper Logic
+function closeGroupInfoModal() {
+    if (groupInfoModal) groupInfoModal.classList.add('hidden');
+    if (groupDescEditWrapper) groupDescEditWrapper.classList.add('hidden');
+    if (groupDescDisplayWrapper) groupDescDisplayWrapper.classList.remove('hidden');
+}
+
+if (closeInfoModal) closeInfoModal.addEventListener('click', closeGroupInfoModal);
+
+if (roomInfoBtn) {
+    roomInfoBtn.addEventListener('click', function() {
+        if (currentRoomId === null) return;
+        var activeRoom = rooms.find(function(r) { return r.id === currentRoomId; });
+        if (!activeRoom) return;
+
+        // 1. Title & Description
+        infoGroupTitle.textContent = activeRoom.name;
+        groupDescText.textContent = activeRoom.description || "No description provided.";
+        groupDescInput.value = activeRoom.description || "";
+
+        // 2. Render Members
+        infoMembersList.innerHTML = '';
+        if (activeRoom.members) {
+            activeRoom.members.forEach(function(member) {
+                var li = document.createElement('li');
+                li.textContent = member;
+                li.style.padding = '4px 0';
+                li.style.borderBottom = '1px solid var(--border-color)';
+                
+                var isAdmin = activeRoom.createdBy && member.toLowerCase() === activeRoom.createdBy.toLowerCase();
+                if (isAdmin) {
+                    var badge = document.createElement('span');
+                    badge.textContent = 'Group Admin';
+                    badge.style.fontSize = '9px';
+                    badge.style.backgroundColor = 'var(--primary-color)';
+                    badge.style.color = '#fff';
+                    badge.style.padding = '2px 4px';
+                    badge.style.borderRadius = '3px';
+                    badge.style.marginLeft = '8px';
+                    li.appendChild(badge);
+                }
+                infoMembersList.appendChild(li);
+            });
+        }
+
+        // 3. Load Add Members checkboxes (Registered users NOT in this room)
+        fetch('/api/users')
+            .then(function(response) {
+                if (response.ok) {
+                    return response.json().then(function(users) {
+                        infoAddMembersList.innerHTML = '';
+                        var activeMembersLower = (activeRoom.members || []).map(function(m) { return m.toLowerCase(); });
+                        var notInRoomUsers = users.filter(function(u) {
+                            return activeMembersLower.indexOf(u.toLowerCase()) === -1;
+                        });
+
+                        if (notInRoomUsers.length === 0) {
+                            infoAddMembersList.innerHTML = '<div style="font-size:12px;color:#777;padding:5px 0;">All registered users are already members.</div>';
+                            submitAddMembersBtn.style.display = 'none';
+                        } else {
+                            submitAddMembersBtn.style.display = 'inline-block';
+                            notInRoomUsers.forEach(function(u) {
+                                var label = document.createElement('label');
+                                label.classList.add('checkbox-item');
+
+                                var checkbox = document.createElement('input');
+                                checkbox.type = 'checkbox';
+                                checkbox.value = u;
+                                checkbox.name = 'info-new-members';
+
+                                label.appendChild(checkbox);
+                                label.appendChild(document.createTextNode(u));
+                                infoAddMembersList.appendChild(label);
+                            });
+                        }
+                    });
+                }
+            });
+
+        groupInfoModal.classList.remove('hidden');
+    });
+}
+
+if (editDescBtn) {
+    editDescBtn.addEventListener('click', function() {
+        groupDescDisplayWrapper.classList.add('hidden');
+        groupDescEditWrapper.classList.remove('hidden');
+        groupDescInput.focus();
+    });
+}
+
+if (cancelDescBtn) {
+    cancelDescBtn.addEventListener('click', function() {
+        groupDescEditWrapper.classList.add('hidden');
+        groupDescDisplayWrapper.classList.remove('hidden');
+    });
+}
+
+if (saveDescBtn) {
+    saveDescBtn.addEventListener('click', function() {
+        var newDesc = groupDescInput.value.trim();
+        fetch('/api/rooms/' + currentRoomId + '/description', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ description: newDesc })
+        })
+        .then(function(response) {
+            if (response.ok) {
+                return response.json().then(function(updatedRoom) {
+                    var idx = rooms.findIndex(function(r) { return r.id === currentRoomId; });
+                    if (idx !== -1) {
+                        rooms[idx].description = updatedRoom.description;
+                    }
+                    groupDescText.textContent = updatedRoom.description || "No description provided.";
+                    groupDescEditWrapper.classList.add('hidden');
+                    groupDescDisplayWrapper.classList.remove('hidden');
+                });
+            }
+        });
+    });
+}
+
+if (submitAddMembersBtn) {
+    submitAddMembersBtn.addEventListener('click', function() {
+        var selected = [];
+        var checkboxes = infoAddMembersList.querySelectorAll('input[type="checkbox"]:checked');
+        checkboxes.forEach(function(cb) {
+            selected.push(cb.value);
+        });
+        if (selected.length === 0) return;
+
+        fetch('/api/rooms/' + currentRoomId + '/members', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ members: selected })
+        })
+        .then(function(response) {
+            if (response.ok) {
+                return response.json().then(function(updatedRoom) {
+                    var idx = rooms.findIndex(function(r) { return r.id === currentRoomId; });
+                    if (idx !== -1) {
+                        rooms[idx].members = updatedRoom.members;
+                    }
+                    roomInfoBtn.click();
+                });
+            }
+        });
+    });
+}
+
+if (exitGroupBtn) {
+    exitGroupBtn.addEventListener('click', function() {
+        if (confirm("Are you sure you want to exit this group?")) {
+            fetch('/api/rooms/' + currentRoomId + '/exit', {
+                method: 'POST'
+            })
+            .then(function(response) {
+                if (response.ok) {
+                    closeGroupInfoModal();
+                    selectRoom(null, '01. Random Group');
+                    loadMyRooms();
+                }
+            });
+        }
+    });
 }

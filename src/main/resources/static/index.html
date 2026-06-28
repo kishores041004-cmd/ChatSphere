@@ -60,6 +60,9 @@
             <button type="button" id="theme-toggle-chat" class="theme-toggle-btn chat-theme-toggle" title="Toggle Theme">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
             </button>
+            <button type="button" id="room-info-btn" class="theme-toggle-btn chat-theme-toggle hidden" title="Group Info" style="right: 50px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </button>
             <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">
                 Logged in as: <span id="logged-in-user" style="font-weight: bold; color: #128ff2;">Guest</span> 
                 | <a href="#" id="logout-link" style="color: #ff4743; text-decoration: none; font-weight: bold; margin-left: 5px;">Logout</a>
@@ -117,6 +120,59 @@
                 <button type="submit" class="primary" style="padding: 8px 15px;">Create Group</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Group Info Modal -->
+<div id="group-info-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="info-group-title" style="margin: 0; font-size: 1.25rem;">Group Details</h3>
+            <span class="close-modal" id="close-info-modal" style="cursor: pointer; font-size: 1.5rem; font-weight: bold;">&times;</span>
+        </div>
+        <div class="group-info-body">
+            <!-- Group Description Section -->
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Group Description</label>
+                <div id="group-desc-display-wrapper" style="display: flex; gap: 8px; align-items: start;">
+                    <p id="group-desc-text" style="margin: 0; flex: 1; font-style: italic; color: #777; font-size: 14px;">No description provided.</p>
+                    <button type="button" id="edit-desc-btn" class="secondary" style="padding: 4px 8px; font-size: 11px; min-height: auto; width: auto; height: auto; box-shadow: none;">Edit</button>
+                </div>
+                <div id="group-desc-edit-wrapper" class="hidden" style="display: flex; flex-direction: column; gap: 8px;">
+                    <textarea id="group-desc-input" placeholder="Add group description..." class="form-control" style="resize: vertical; min-height: 60px; font-family: inherit; font-size: 14px; padding: 5px;"></textarea>
+                    <div style="text-align: right;">
+                        <button type="button" id="cancel-desc-btn" class="secondary" style="padding: 4px 8px; font-size: 11px; min-height: auto; margin-right: 5px; width: auto; height: auto; box-shadow: none;">Cancel</button>
+                        <button type="button" id="save-desc-btn" class="primary" style="padding: 4px 8px; font-size: 11px; min-height: auto; width: auto; height: auto; box-shadow: none;">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Members List & Add Members -->
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Group Members</label>
+                <ul id="info-members-list" style="max-height: 120px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; list-style: none; margin: 0; background-color: var(--bg-color); font-size: 14px;">
+                    <!-- Dynamically populated -->
+                </ul>
+            </div>
+
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Add Members</label>
+                <div id="info-add-members-list" class="checkbox-list">
+                    <!-- Dynamically populated checklist of friends not currently in the group -->
+                </div>
+                <div style="text-align: right; margin-top: 8px;">
+                    <button type="button" id="submit-add-members-btn" class="primary" style="padding: 6px 12px; font-size: 12px; min-height: auto; width: auto; height: auto; box-shadow: none;">Add Selected Members</button>
+                </div>
+            </div>
+
+            <!-- Exit Option -->
+            <div class="form-actions" style="margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 15px; text-align: left;">
+                <button type="button" id="exit-group-btn" class="accent" style="width: 100%; font-weight: bold; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    Exit Group
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 

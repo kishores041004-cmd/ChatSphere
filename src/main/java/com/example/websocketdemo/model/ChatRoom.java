@@ -18,6 +18,8 @@ public class ChatRoom {
     @Column(name = "created_by")
     private String createdBy;
 
+    private String description;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "room_members", joinColumns = @JoinColumn(name = "room_id"))
     @Column(name = "username")
@@ -53,6 +55,14 @@ public class ChatRoom {
 
     public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Set<String> getMembers() {
