@@ -433,6 +433,15 @@ function onMessageReceived(payload) {
     }
 
     if (message.type === 'JOIN' || message.type === 'LEAVE') {
+        if (message.type === 'JOIN' && message.content && message.content.indexOf('ROOM_CREATED:') === 0) {
+            var parts = message.content.split(':');
+            var membersList = parts[3] ? parts[3].split(',') : [];
+            if (membersList.indexOf(username.toLowerCase()) !== -1) {
+                loadMyRooms();
+            }
+            return;
+        }
+
         if (message.type === 'JOIN' && message.content === tempId) {
             username = message.sender;
             sessionStorage.setItem('chatUsername', username);

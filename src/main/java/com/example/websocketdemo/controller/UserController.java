@@ -33,6 +33,9 @@ public class UserController {
     @Autowired
     private ChatRoomRepository chatRoomRepository;
 
+    @Autowired
+    private org.springframework.messaging.simp.SimpMessageSendingOperations messagingTemplate;
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserDto userDto) {
         String username = userDto.getUsername();
@@ -146,6 +149,18 @@ public class UserController {
             }
         }
         chatRoomRepository.save(room);
+
+        try {
+            String membersStr = String.join(",", room.getMembers());
+            com.example.websocketdemo.model.ChatMessage broadcast = new com.example.websocketdemo.model.ChatMessage();
+            broadcast.setType(com.example.websocketdemo.model.ChatMessage.MessageType.JOIN);
+            broadcast.setContent("ROOM_CREATED:" + room.getId() + ":" + room.getName() + ":" + membersStr);
+            broadcast.setSender(creator);
+            messagingTemplate.convertAndSend("/topic/public", broadcast);
+        } catch (Exception e) {
+            // Ignore messaging exception if any
+        }
+
         return ResponseEntity.ok(room);
     }
 
