@@ -29,6 +29,7 @@ nbdist/
 
 # Local Chat History
 chat_history.json
+users.json
 
 # Local Credentials
 src/main/resources/application-local.properties

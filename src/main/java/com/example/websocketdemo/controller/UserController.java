@@ -1,11 +1,15 @@
 package com.example.websocketdemo.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -16,8 +20,34 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequestMapping("/api")
 public class UserController {
 
-    // Simple in-memory thread-safe registry of username -> hashed password
+    // Simple thread-safe registry of username -> hashed password
     private static final Map<String, String> userRegistry = new ConcurrentHashMap<>();
+    private static final String USERS_FILE_PATH = "users.json";
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    static {
+        loadUsers();
+    }
+
+    private static synchronized void loadUsers() {
+        File file = new File(USERS_FILE_PATH);
+        if (file.exists()) {
+            try {
+                Map<String, String> loaded = objectMapper.readValue(file, new TypeReference<Map<String, String>>() {});
+                userRegistry.putAll(loaded);
+            } catch (IOException e) {
+                System.err.println("Could not load users: " + e.getMessage());
+            }
+        }
+    }
+
+    private static synchronized void saveUsers() {
+        try {
+            objectMapper.writeValue(new File(USERS_FILE_PATH), userRegistry);
+        } catch (IOException e) {
+            System.err.println("Could not save users: " + e.getMessage());
+        }
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserDto userDto) {
@@ -36,6 +66,7 @@ public class UserController {
         // Hash and store the password
         String hashedPassword = hashPassword(password);
         userRegistry.put(username.toLowerCase(), hashedPassword);
+        saveUsers();
 
         return ResponseEntity.ok(Map.of("message", "Registration successful"));
     }
