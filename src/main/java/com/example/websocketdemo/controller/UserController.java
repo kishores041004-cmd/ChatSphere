@@ -64,6 +64,15 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid username or password"));
         }
 
+        // Block duplicate logins from other devices/tabs
+        final String finalUsername = username.toLowerCase();
+        boolean alreadyLoggedIn = ActiveUserRegistry.activeUsers.stream()
+                .anyMatch(u -> u.toLowerCase().equals(finalUsername));
+        if (alreadyLoggedIn) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "User is already logged in on another device or tab"));
+        }
+
         // Save username in HTTP session
         session.setAttribute("username", username);
 
