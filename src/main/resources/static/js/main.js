@@ -722,8 +722,22 @@ messageForm.addEventListener('submit', sendMessage, true);
 // Check sessionStorage first to isolate tab-specific logins in the same browser session
 var storedUser = sessionStorage.getItem('chatUsername');
 if (storedUser) {
-    username = storedUser;
-    enterChatRoom(username);
+    fetch('/api/me')
+        .then(function(response) {
+            if (response.ok) {
+                username = storedUser;
+                enterChatRoom(username);
+            } else {
+                sessionStorage.removeItem('chatUsername');
+                usernamePage.classList.remove('hidden');
+                chatPage.classList.add('hidden');
+            }
+        })
+        .catch(function() {
+            sessionStorage.removeItem('chatUsername');
+            usernamePage.classList.remove('hidden');
+            chatPage.classList.add('hidden');
+        });
 } else {
     var urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('login') === 'google') {
