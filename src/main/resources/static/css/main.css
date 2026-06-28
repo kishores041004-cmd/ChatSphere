@@ -132,6 +132,37 @@ button.accent {
     margin-top: 10px;
 }
 
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    padding-right: 40px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    color: #777;
+    outline: none;
+    min-height: auto;
+    height: auto;
+    width: auto;
+    box-shadow: none;
+    vertical-align: middle;
+}
+
+.password-toggle:hover {
+    color: #128ff2;
+}
+
 
 #chat-page {
     position: relative;
