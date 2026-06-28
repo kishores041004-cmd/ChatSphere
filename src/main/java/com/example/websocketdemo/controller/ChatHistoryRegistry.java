@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ChatHistoryRegistry {
-    private static final String FILE_PATH = "chat_history.json";
+    private static final String DATA_DIR = System.getenv("DATA_DIR") != null ? System.getenv("DATA_DIR") : "";
+    private static final String FILE_PATH = DATA_DIR.isEmpty() ? "chat_history.json" : (DATA_DIR + "/chat_history.json");
     private static final List<ChatMessage> history = new CopyOnWriteArrayList<>();
     private static final ObjectMapper objectMapper = new ObjectMapper();
 

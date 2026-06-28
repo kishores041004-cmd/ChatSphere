@@ -22,7 +22,8 @@ public class UserController {
 
     // Simple thread-safe registry of username -> hashed password
     private static final Map<String, String> userRegistry = new ConcurrentHashMap<>();
-    private static final String USERS_FILE_PATH = "users.json";
+    private static final String DATA_DIR = System.getenv("DATA_DIR") != null ? System.getenv("DATA_DIR") : "";
+    private static final String USERS_FILE_PATH = DATA_DIR.isEmpty() ? "users.json" : (DATA_DIR + "/users.json");
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     static {
