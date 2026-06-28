@@ -58,6 +58,11 @@ var infoAddMembersList = document.querySelector('#info-add-members-list');
 var submitAddMembersBtn = document.querySelector('#submit-add-members-btn');
 var exitGroupBtn = document.querySelector('#exit-group-btn');
 
+// Pinned Message Selectors
+var pinnedMessageBanner = document.querySelector('#pinned-message-banner');
+var pinnedMessageText = document.querySelector('#pinned-message-text');
+var unpinMessageBtn = document.querySelector('#unpin-message-btn');
+
 var currentRoomId = null; // null represents the Public Chat
 var rooms = [];
 var unreadCounts = {};
@@ -377,37 +382,60 @@ function renderMessage(message) {
         timestampElement.textContent = msgTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         messageElement.appendChild(timestampElement);
 
-        // Add Edit and Delete action controls for current user's messages within 5 mins
-        if (message.sender === username && message.id) {
+        // Add Edit, Delete and Pin action controls
+        if (message.id) {
             var actionsDiv = document.createElement('div');
             actionsDiv.classList.add('message-actions');
             
-            var editBtn = document.createElement('button');
-            editBtn.textContent = 'Edit';
-            editBtn.classList.add('edit-msg-btn');
-            editBtn.addEventListener('click', function() {
-                initiateEditMessage(message.id);
-            });
+            var isAuthor = message.sender === username;
+            var editBtn = null;
+            var deleteBtn = null;
             
-            var deleteBtn = document.createElement('button');
-            deleteBtn.textContent = 'Delete';
-            deleteBtn.classList.add('delete-msg-btn');
-            deleteBtn.addEventListener('click', function() {
-                requestDeleteMessage(message.id);
-            });
+            if (isAuthor) {
+                editBtn = document.createElement('button');
+                editBtn.textContent = 'Edit';
+                editBtn.classList.add('edit-msg-btn');
+                editBtn.addEventListener('click', function() {
+                    initiateEditMessage(message.id);
+                });
+                
+                deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.classList.add('delete-msg-btn');
+                deleteBtn.addEventListener('click', function() {
+                    requestDeleteMessage(message.id);
+                });
+                
+                actionsDiv.appendChild(editBtn);
+                actionsDiv.appendChild(deleteBtn);
+            }
             
-            actionsDiv.appendChild(editBtn);
-            actionsDiv.appendChild(deleteBtn);
-            messageElement.appendChild(actionsDiv);
+            if (currentRoomId !== null) {
+                var pinBtn = document.createElement('button');
+                pinBtn.textContent = 'Pin';
+                pinBtn.classList.add('pin-msg-btn');
+                pinBtn.addEventListener('click', function() {
+                    requestPinMessage(message.id);
+                });
+                actionsDiv.appendChild(pinBtn);
+            }
             
-            var sendTime = message.createdAt || Date.now();
-            var remainingTime = 5 * 60 * 1000 - (Date.now() - sendTime);
-            if (remainingTime > 0) {
-                setTimeout(function() {
-                    if (actionsDiv) actionsDiv.remove();
-                }, remainingTime);
-            } else {
-                actionsDiv.style.display = 'none';
+            if (actionsDiv.children.length > 0) {
+                messageElement.appendChild(actionsDiv);
+                
+                if (isAuthor) {
+                    var sendTime = message.createdAt || Date.now();
+                    var remainingTime = 5 * 60 * 1000 - (Date.now() - sendTime);
+                    if (remainingTime > 0) {
+                        setTimeout(function() {
+                            if (editBtn) editBtn.remove();
+                            if (deleteBtn) deleteBtn.remove();
+                        }, remainingTime);
+                    } else {
+                        if (editBtn) editBtn.remove();
+                        if (deleteBtn) deleteBtn.remove();
+                    }
+                }
             }
         }
     }
@@ -594,6 +622,14 @@ function selectRoom(roomId, roomName) {
         if (chatHeader) chatHeader.style.cursor = 'pointer';
     }
     
+    var activeRoom = rooms.find(function(r) { return r.id === roomId; });
+    if (roomId !== null && activeRoom && activeRoom.pinnedMessageContent) {
+        if (pinnedMessageText) pinnedMessageText.textContent = activeRoom.pinnedMessageContent;
+        if (pinnedMessageBanner) pinnedMessageBanner.classList.remove('hidden');
+    } else {
+        if (pinnedMessageBanner) pinnedMessageBanner.classList.add('hidden');
+    }
+    
     var historyUrl = roomId === null ? '/api/history' : '/api/history/' + roomId;
     
     fetch(historyUrl)
@@ -601,6 +637,35 @@ function selectRoom(roomId, roomName) {
             if (response.ok) {
                 return response.json().then(function(messages) {
                     messageArea.innerHTML = '';
+                    
+                    // Render Group Description at the top of the chat area
+                    if (roomId !== null && activeRoom) {
+                        var descLi = document.createElement('li');
+                        descLi.classList.add('event-message');
+                        descLi.style.backgroundColor = 'var(--border-color)';
+                        descLi.style.padding = '10px 15px';
+                        descLi.style.borderRadius = '8px';
+                        descLi.style.margin = '10px auto';
+                        descLi.style.maxWidth = '80%';
+                        descLi.style.textAlign = 'center';
+                        descLi.style.borderLeft = '4px solid var(--primary-color)';
+                        descLi.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                        
+                        var titleSpan = document.createElement('span');
+                        titleSpan.style.fontWeight = 'bold';
+                        titleSpan.style.display = 'block';
+                        titleSpan.style.marginBottom = '5px';
+                        titleSpan.textContent = '📝 Group Description';
+                        
+                        var descText = document.createElement('span');
+                        descText.textContent = activeRoom.description || "No description set yet. Click the header to add one!";
+                        descText.style.fontStyle = 'italic';
+                        
+                        descLi.appendChild(titleSpan);
+                        descLi.appendChild(descText);
+                        messageArea.appendChild(descLi);
+                    }
+                    
                     messages.forEach(function(msg) {
                         renderMessage(msg);
                     });
@@ -1074,5 +1139,47 @@ if (chatHeaderElement) {
         if (currentRoomId !== null) {
             if (roomInfoBtn) roomInfoBtn.click();
         }
+    });
+}
+
+// Pin/Unpin Message Helpers & Listeners
+function requestPinMessage(messageId) {
+    if (currentRoomId === null) return;
+    fetch('/api/rooms/' + currentRoomId + '/pin/' + messageId, {
+        method: 'POST'
+    })
+    .then(function(response) {
+        if (response.ok) {
+            return response.json().then(function(updatedRoom) {
+                var idx = rooms.findIndex(function(r) { return r.id === currentRoomId; });
+                if (idx !== -1) {
+                    rooms[idx].pinnedMessageId = updatedRoom.pinnedMessageId;
+                    rooms[idx].pinnedMessageContent = updatedRoom.pinnedMessageContent;
+                }
+                if (pinnedMessageText) pinnedMessageText.textContent = updatedRoom.pinnedMessageContent;
+                if (pinnedMessageBanner) pinnedMessageBanner.classList.remove('hidden');
+            });
+        }
+    });
+}
+
+if (unpinMessageBtn) {
+    unpinMessageBtn.addEventListener('click', function() {
+        if (currentRoomId === null) return;
+        fetch('/api/rooms/' + currentRoomId + '/unpin', {
+            method: 'POST'
+        })
+        .then(function(response) {
+            if (response.ok) {
+                return response.json().then(function(updatedRoom) {
+                    var idx = rooms.findIndex(function(r) { return r.id === currentRoomId; });
+                    if (idx !== -1) {
+                        rooms[idx].pinnedMessageId = null;
+                        rooms[idx].pinnedMessageContent = null;
+                    }
+                    if (pinnedMessageBanner) pinnedMessageBanner.classList.add('hidden');
+                });
+            }
+        });
     });
 }

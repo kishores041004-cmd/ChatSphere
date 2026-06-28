@@ -20,6 +20,12 @@ public class ChatRoom {
 
     private String description;
 
+    @Column(name = "pinned_message_id")
+    private Long pinnedMessageId;
+
+    @Column(name = "pinned_message_content")
+    private String pinnedMessageContent;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "room_members", joinColumns = @JoinColumn(name = "room_id"))
     @Column(name = "username")
@@ -63,6 +69,22 @@ public class ChatRoom {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Long getPinnedMessageId() {
+        return pinnedMessageId;
+    }
+
+    public void setPinnedMessageId(Long pinnedMessageId) {
+        this.pinnedMessageId = pinnedMessageId;
+    }
+
+    public String getPinnedMessageContent() {
+        return pinnedMessageContent;
+    }
+
+    public void setPinnedMessageContent(String pinnedMessageContent) {
+        this.pinnedMessageContent = pinnedMessageContent;
     }
 
     public Set<String> getMembers() {

@@ -678,3 +678,24 @@ button.accent {
     text-transform: uppercase;
     flex-shrink: 0;
 }
+
+.pin-msg-btn {
+    background: none;
+    border: none;
+    color: #777;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 2px 5px;
+    margin-right: 5px;
+    outline: none;
+    min-height: auto;
+    width: auto;
+    height: auto;
+    box-shadow: none;
+    transition: color 0.2s ease;
+}
+
+.pin-msg-btn:hover {
+    color: #e0a800;
+    text-decoration: underline;
+}

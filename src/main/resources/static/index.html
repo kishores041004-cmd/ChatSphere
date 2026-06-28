@@ -68,6 +68,13 @@
                 | <a href="#" id="logout-link" style="color: #ff4743; text-decoration: none; font-weight: bold; margin-left: 5px;">Logout</a>
             </p>
         </div>
+        <!-- Pinned Message Banner -->
+        <div id="pinned-message-banner" class="hidden" style="background-color: var(--border-color); padding: 8px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 13px; z-index: 5;">
+            <span style="display: flex; align-items: center; gap: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 80%;">
+                📌 <span id="pinned-message-text" style="font-weight: 500;">Pinned Message</span>
+            </span>
+            <button type="button" id="unpin-message-btn" style="background: none; border: none; font-weight: bold; cursor: pointer; color: var(--accent-color); padding: 2px 5px; min-height: auto; width: auto; height: auto; box-shadow: none;">Unpin</button>
+        </div>
         <div class="connecting">
             Connecting...
         </div>
