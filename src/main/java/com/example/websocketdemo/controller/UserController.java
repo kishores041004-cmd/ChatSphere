@@ -2,9 +2,7 @@ package com.example.websocketdemo.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
@@ -66,20 +64,10 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> me(HttpSession session, @AuthenticationPrincipal OAuth2User principal) {
+    public ResponseEntity<?> me(HttpSession session) {
         String username = (String) session.getAttribute("username");
         if (username != null) {
             return ResponseEntity.ok(Map.of("username", username, "authenticated", true, "authMethod", "form"));
-        }
-        if (principal != null) {
-            String googleName = principal.getAttribute("name");
-            String email = principal.getAttribute("email");
-            return ResponseEntity.ok(Map.of(
-                    "googleName", googleName != null ? googleName : "",
-                    "email", email != null ? email : "",
-                    "authenticated", true,
-                    "authMethod", "google"
-            ));
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Not logged in"));
     }
