@@ -1,5 +1,7 @@
 # ChatSphere 💬
 
+👉 **Live Demo:** [chatsphere-production-749f.up.railway.app](https://chatsphere-production-749f.up.railway.app/)
+
 ChatSphere is a real-time, multi-user web chat application built using **Spring Boot**, **WebSockets**, **STOMP**, and **SockJS**. It supports dual authentication flows (traditional credentials registry and Google OAuth2 Single Sign-On), dynamic active user tracking, connection resolution, and chat history recovery.
 
 ![App Screenshot](screenshot.png)
