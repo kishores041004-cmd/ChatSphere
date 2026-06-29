@@ -61,4 +61,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .setClientPasscode("guest");
         */
     }
+
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        registration.setMessageSizeLimit(10 * 1024 * 1024); // 10MB
+        registration.setSendBufferSizeLimit(10 * 1024 * 1024); // 10MB
+        registration.setSendTimeLimit(20 * 1000); // 20s
+    }
 }
