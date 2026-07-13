@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <title>ChatSphere | Real-Time Chat</title>
+    <link rel="stylesheet" href="/css/main.css?v=4" />
+</head>
+<body>
+<noscript>
+    <h2>Sorry! Your browser doesn't support Javascript</h2>
+</noscript>
+
+<div id="username-page">
+    <div class="username-page-container">
+        <button type="button" id="theme-toggle-auth" class="theme-toggle-btn" title="Toggle Theme">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+        <h1 class="title" id="auth-title">Login to ChatSphere</h1>
+        <form id="usernameForm" name="usernameForm">
+            <div class="form-group">
+                <input type="text" id="name" placeholder="Username" autocomplete="off" class="form-control" required />
+            </div>
+            <div class="form-group password-wrapper">
+                <input type="password" id="password" placeholder="Password" autocomplete="off" class="form-control" required />
+                <button type="button" id="password-toggle-btn" class="password-toggle" title="Show/Hide Password">
+                    <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+            </div>
+            <div class="form-group">
+                <button type="submit" id="auth-submit" class="accent username-submit">Login</button>
+            </div>
+            <div class="form-group" style="text-align: center; margin: 15px 0;">
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin-bottom: 15px;">
+                <button type="button" id="google-login-btn" style="background-color: white; color: #757575; border: 1px solid #ddd; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; width: 100%; padding: 10px; cursor: pointer; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.91c1.7-1.57 2.69-3.88 2.69-6.62z" fill="#4285F4"/><path d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.91-2.26c-.8.54-1.83.86-3.05.86-2.34 0-4.33-1.58-5.04-3.7H.95v2.33C2.43 16.03 5.49 18 9 18z" fill="#34A853"/><path d="M3.96 10.76a4.91 4.91 0 0 1 0-3.52V4.91H.95a8.99 8.99 0 0 0 0 8.18l3.01-2.33z" fill="#FBBC05"/><path d="M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.21C13.46.78 11.43 0 9 0 5.49 0 2.43 1.97.95 4.91l3.01 2.33C4.67 5.16 6.66 3.58 9 3.58z" fill="#EA4335"/></svg>
+                    <span>Sign in with Google</span>
+                </button>
+            </div>
+            <div class="form-group" style="margin-top: 15px; font-size: 14px; text-align: center;">
+                <span id="toggle-message">Don't have an account?</span> 
+                <a href="#" id="toggle-auth-mode">Register here</a>
+            </div>
+            <div id="auth-feedback" class="form-group" style="margin-top: 10px; font-weight: bold; text-align: center; font-size: 14px;"></div>
+        </form>
+    </div>
+</div>
+
+<div id="google-username-page" class="hidden">
+    <div class="username-page-container">
+        <h1 class="title" style="font-size: 24px; margin-bottom: 5px;">Choose Display Name</h1>
+        <p style="color: #666; font-size: 14px; text-align: center; margin-bottom: 20px;">Authenticated via Google. Enter your username to join the chat.</p>
+        <form id="googleUsernameForm" name="googleUsernameForm">
+            <div class="form-group">
+                <input type="text" id="google-name-input" placeholder="Display Name" autocomplete="off" class="form-control" required />
+            </div>
+            <div class="form-group">
+                <button type="submit" class="accent username-submit">Start Chatting</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="chat-page" class="hidden">
+    <div class="chat-container">
+        <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" id="sidebar-toggle-btn" class="sidebar-toggle-btn" title="Toggle Sidebar" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-color); padding: 0; min-height: auto; width: auto; height: auto; box-shadow: none;">
+                    ☰
+                </button>
+                <h2 style="margin: 0; text-align: left;">01. Random Group</h2>
+            </div>
+
+            <div class="chat-header-actions" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <button type="button" id="remove-bg-btn" class="theme-toggle-btn hidden" title="Remove Chat Wallpaper" style="position: static; width: auto; padding: 0 10px; display: inline-flex; align-items: center; gap: 5px; font-weight: bold; font-size: 12px; border-radius: 4px; height: 30px; background-color: rgba(255, 71, 67, 0.1); color: #ff4743; border: 1px solid rgba(255, 71, 67, 0.2);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    <span>Remove Wall</span>
+                </button>
+                <button type="button" id="set-bg-btn" class="theme-toggle-btn" title="Set Chat Wallpaper" style="position: static; width: auto; padding: 0 10px; display: inline-flex; align-items: center; gap: 5px; font-weight: bold; font-size: 12px; border-radius: 4px; height: 30px; border: 1px solid var(--border-color); background: var(--card-bg-color); color: var(--text-color);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <span>Set Wall</span>
+                </button>
+                <button type="button" id="clear-chat-btn" class="theme-toggle-btn" title="Clear Chat" style="position: static; width: auto; padding: 0 10px; display: inline-flex; align-items: center; gap: 5px; font-weight: bold; font-size: 12px; border-radius: 4px; height: 30px; border: 1px solid var(--border-color); background: var(--card-bg-color); color: var(--text-color);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    <span>Clear Chat</span>
+                </button>
+                <button type="button" id="room-info-btn" class="theme-toggle-btn hidden" title="Group Info" style="position: static; width: 30px; height: 30px; border: 1px solid var(--border-color); background: var(--card-bg-color); color: var(--text-color); display: inline-flex; align-items: center; justify-content: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+                <button type="button" id="theme-toggle-chat" class="theme-toggle-btn" title="Toggle Theme" style="position: static; width: 30px; height: 30px; border: 1px solid var(--border-color); background: var(--card-bg-color); color: var(--text-color); display: inline-flex; align-items: center; justify-content: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+            </div>
+            <input type="file" id="chat-bg-input" accept="image/*" style="display: none;" />
+            <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">
+                Logged in as: <span id="logged-in-user" style="font-weight: bold; color: #128ff2;">Guest</span> 
+                | <a href="#" id="logout-link" style="color: #ff4743; text-decoration: none; font-weight: bold; margin-left: 5px;">Logout</a>
+                | <a href="#" id="delete-account-link" style="color: #d9534f; text-decoration: none; font-weight: bold; margin-left: 5px;">Delete Account</a>
+            </p>
+        </div>
+        <!-- Selection Actions Bar (hidden by default) -->
+        <div id="selection-actions-bar" class="hidden" style="background-color: var(--primary-color); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 14px; z-index: 10; border-bottom: 1px solid rgba(0,0,0,0.1);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="select-all-checkbox" style="width: 16px; height: 16px; cursor: pointer;" />
+                <label for="select-all-checkbox" style="cursor: pointer; user-select: none; font-weight: bold; margin: 0;">Select All</label>
+                <span id="selection-count" style="margin-left: 15px; font-size: 13px; opacity: 0.9;">0 selected</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" id="delete-selected-btn" style="background-color: #ff4743; color: white; border: none; padding: 6px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">Delete</button>
+                <button type="button" id="cancel-selection-btn" style="background-color: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px;">Cancel</button>
+            </div>
+        </div>
+        <!-- Pinned Message Banner -->
+        <div id="pinned-message-banner" class="hidden" style="background-color: var(--border-color); padding: 8px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 13px; z-index: 5;">
+            <span style="display: flex; align-items: center; gap: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 80%;">
+                📌 <span id="pinned-message-text" style="font-weight: 500;">Pinned Message</span>
+            </span>
+            <button type="button" id="unpin-message-btn" style="background: none; border: none; font-weight: bold; cursor: pointer; color: var(--accent-color); padding: 2px 5px; min-height: auto; width: auto; height: auto; box-shadow: none;">Unpin</button>
+        </div>
+        <div class="connecting">
+            Connecting...
+        </div>
+        <div class="chat-main">
+            <ul id="messageArea">
+
+            </ul>
+            <div id="active-users-sidebar" class="sidebar" style="display: flex; flex-direction: column; height: 100%;">
+                <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
+                    <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+                        <span>Groups</span>
+                        <button type="button" id="new-group-btn" class="new-group-btn" title="Create New Group" style="background: var(--primary-color); border: none; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold; min-height: auto; width: auto; height: auto; box-shadow: none;">+ New Group</button>
+                    </div>
+                    <ul id="rooms-list" style="list-style: none; padding: 0; margin: 0; min-height: 100px;">
+                        <!-- Rooms loaded dynamically -->
+                    </ul>
+
+                    <div class="sidebar-header" style="padding: 10px 15px; border-top: 1px solid var(--border-color); margin-top: 10px;">
+                        <span>Direct Messages</span>
+                    </div>
+                    <ul id="private-users-list" style="list-style: none; padding: 0; margin: 0; overflow-y: auto;">
+                        <!-- Registered users loaded dynamically for private chatting -->
+                    </ul>
+                </div>
+                <div style="padding: 10px 15px; border-top: 1px solid var(--border-color); background-color: var(--sidebar-bg-color);">
+                    <button type="button" id="customer-support-btn" style="width: 100%; padding: 10px; background-color: var(--primary-color); color: white; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                        <span>Customer Support</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="typing-indicator" class="typing-indicator hidden-indicator"></div>
+        <!-- Reply Preview Bar (hidden by default) -->
+        <div id="reply-preview-bar" class="hidden" style="background-color: var(--border-color); padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); font-size: 13px;">
+            <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 80%;">
+                <span style="font-weight: bold; color: var(--primary-color);">Replying to </span>
+                <span id="reply-preview-sender" style="font-weight: bold;">User</span>: 
+                <span id="reply-preview-text" style="color: #666; font-style: italic;">message preview</span>
+            </div>
+            <button type="button" id="cancel-reply-btn" style="background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #ff4743; padding: 0 5px; min-height: auto; width: auto; height: auto; box-shadow: none;">&times;</button>
+        </div>
+
+        <!-- Attachment Preview Bar (hidden by default) -->
+        <div id="attachment-preview-bar" class="hidden" style="background-color: var(--border-color); padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); font-size: 13px;">
+            <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 80%;">
+                <span style="font-weight: bold; color: var(--primary-color);">Attached File: </span>
+                <span id="attachment-preview-name" style="font-weight: bold;">filename.ext</span>
+            </div>
+            <button type="button" id="cancel-attachment-btn" style="background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #ff4743; padding: 0 5px; min-height: auto; width: auto; height: auto; box-shadow: none;">&times;</button>
+        </div>
+
+        <form id="messageForm" name="messageForm" nameForm="messageForm" style="position: relative;">
+            <div class="form-group" style="margin: 0; padding: 10px;">
+                <div class="input-group clearfix" style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                    
+                    <!-- File Attachment Button -->
+                    <button type="button" id="attach-btn" style="background: none; border: none; cursor: pointer; padding: 5px; color: #666; display: flex; align-items: center; justify-content: center; min-height: auto; width: auto; height: auto; box-shadow: none;" title="Attach File/Image">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                    </button>
+                    <input type="file" id="file-attachment-input" style="display: none;" />
+
+                    <!-- Doodle Palette Button -->
+                    <button type="button" id="doodle-btn" style="background: none; border: none; cursor: pointer; padding: 5px; color: #666; display: flex; align-items: center; justify-content: center; min-height: auto; width: auto; height: auto; box-shadow: none;" title="Doodle Canvas">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 14.7255 3.09032 17.1962 4.85857 19C5.34776 19.4892 5.92 20 6.5 20C7.8 20 8 19 9 18C10 17 11 17 12 17C13.5 17 14 18 15 19C16 20 17 21 18 20.5C18.5 20.25 19 19.5 19 19"></path><circle cx="7.5" cy="10.5" r="1.5"></circle><circle cx="11.5" cy="7.5" r="1.5"></circle><circle cx="16.5" cy="9.5" r="1.5"></circle><circle cx="15.5" cy="14.5" r="1.5"></circle></svg>
+                    </button>
+
+                    <!-- Message Input Field -->
+                    <input type="text" id="message" placeholder="Type a message..." autocomplete="off" class="form-control" style="flex: 1; margin: 0; min-height: 40px; border-radius: 20px; padding: 0 15px; border: 1px solid var(--border-color);"/>
+
+                    <!-- Audio Note Button -->
+                    <button type="button" id="record-voice-btn" style="background: none; border: none; cursor: pointer; padding: 5px; color: #666; display: flex; align-items: center; justify-content: center; min-height: auto; width: auto; height: auto; box-shadow: none;" title="Record Voice Message">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="mic-icon"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                    </button>
+
+                    <!-- Disappearing Message Button -->
+                    <div style="position: relative; display: inline-block;">
+                        <button type="button" id="destruct-toggle-btn" style="background: none; border: none; cursor: pointer; padding: 5px; color: #666; display: flex; align-items: center; justify-content: center; min-height: auto; width: auto; height: auto; box-shadow: none;" title="Disappearing Messages Timer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="destruct-timer-icon"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        </button>
+                        <select id="destruct-time-select" class="hidden" style="position: absolute; bottom: 45px; right: 0; background: var(--card-bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; padding: 5px; font-size: 12px; z-index: 100; min-height: auto; width: 100px;">
+                            <option value="0">Timer Off</option>
+                            <option value="10">10 Seconds</option>
+                            <option value="30">30 Seconds</option>
+                            <option value="60">1 Minute</option>
+                        </select>
+                    </div>
+
+                    <!-- Send Button -->
+                    <button type="submit" class="primary" style="border-radius: 20px; padding: 8px 20px; font-weight: bold; min-height: 40px; margin: 0; width: auto;">Send</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- New Group Modal -->
+<div id="new-group-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="margin: 0; font-size: 1.25rem;">Create New Group</h3>
+            <span class="close-modal" id="close-group-modal" style="cursor: pointer; font-size: 1.5rem; font-weight: bold;">&times;</span>
+        </div>
+        <form id="new-group-form">
+            <div class="form-group">
+                <label for="group-name" style="display: block; margin-bottom: 5px; font-weight: 500;">Group Name</label>
+                <input type="text" id="group-name" placeholder="Enter group name..." class="form-control" required autocomplete="off"/>
+            </div>
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Add Members</label>
+                <div id="members-checkbox-list" class="checkbox-list">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+            <div class="form-actions" style="text-align: right; margin-top: 15px;">
+                <button type="button" id="cancel-group-btn" class="secondary" style="margin-right: 5px; padding: 8px 15px;">Cancel</button>
+                <button type="submit" class="primary" style="padding: 8px 15px;">Create Group</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Group Info Modal -->
+<div id="group-info-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="info-group-title" style="margin: 0; font-size: 1.25rem;">Group Details</h3>
+            <span class="close-modal" id="close-info-modal" style="cursor: pointer; font-size: 1.5rem; font-weight: bold;">&times;</span>
+        </div>
+        <div class="group-info-body">
+            <!-- Group Description Section -->
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Group Description</label>
+                <div id="group-desc-display-wrapper" style="display: flex; gap: 8px; align-items: start;">
+                    <p id="group-desc-text" style="margin: 0; flex: 1; font-style: italic; color: #777; font-size: 14px;">No description provided.</p>
+                    <button type="button" id="edit-desc-btn" class="secondary" style="padding: 4px 8px; font-size: 11px; min-height: auto; width: auto; height: auto; box-shadow: none;">Edit</button>
+                </div>
+                <div id="group-desc-edit-wrapper" class="hidden" style="display: flex; flex-direction: column; gap: 8px;">
+                    <textarea id="group-desc-input" placeholder="Add group description..." class="form-control" style="resize: vertical; min-height: 60px; font-family: inherit; font-size: 14px; padding: 5px;"></textarea>
+                    <div style="text-align: right;">
+                        <button type="button" id="cancel-desc-btn" class="secondary" style="padding: 4px 8px; font-size: 11px; min-height: auto; margin-right: 5px; width: auto; height: auto; box-shadow: none;">Cancel</button>
+                        <button type="button" id="save-desc-btn" class="primary" style="padding: 4px 8px; font-size: 11px; min-height: auto; width: auto; height: auto; box-shadow: none;">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Members List & Add Members -->
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Group Members</label>
+                <ul id="info-members-list" style="max-height: 120px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; list-style: none; margin: 0; background-color: var(--bg-color); font-size: 14px;">
+                    <!-- Dynamically populated -->
+                </ul>
+            </div>
+
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 5px; font-weight: 500;">Add Members</label>
+                <div id="info-add-members-list" class="checkbox-list">
+                    <!-- Dynamically populated checklist of friends not currently in the group -->
+                </div>
+                <div style="text-align: right; margin-top: 8px;">
+                    <button type="button" id="submit-add-members-btn" class="primary" style="padding: 6px 12px; font-size: 12px; min-height: auto; width: auto; height: auto; box-shadow: none;">Add Selected Members</button>
+                </div>
+            </div>
+
+            <!-- Exit Option -->
+            <div class="form-actions" style="margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 15px; text-align: left;">
+                <button type="button" id="exit-group-btn" class="accent" style="width: 100%; font-weight: bold; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    Exit Group
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Choice Modal -->
+<div id="delete-choice-modal" class="modal hidden" style="z-index: 1000;">
+    <div class="modal-content" style="max-width: 400px; text-align: center; padding: 25px;">
+        <h3 style="margin-top: 0; font-size: 18px; margin-bottom: 15px;">Delete Message(s)?</h3>
+        <p id="delete-modal-warning" style="font-size: 14px; color: #666; margin-bottom: 25px;">How would you like to delete the selected message(s)?</p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button type="button" id="delete-for-me-btn" class="primary" style="padding: 10px; font-weight: bold; background-color: var(--primary-color);">Delete for Me</button>
+            <button type="button" id="delete-for-everyone-btn" class="accent" style="padding: 10px; font-weight: bold; background-color: #d9534f; color: white; border: none; cursor: pointer;">Delete for Everyone</button>
+            <button type="button" id="cancel-delete-modal-btn" class="secondary" style="padding: 10px; font-weight: bold; margin-top: 10px;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Crop Wallpaper Modal -->
+<div id="crop-modal" class="modal hidden" style="z-index: 1001;">
+    <div class="modal-content" style="max-width: 600px; padding: 20px; text-align: center;">
+        <h3 style="margin-top: 0; margin-bottom: 10px;">Crop Wallpaper</h3>
+        <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Click and drag (or touch and drag) on the image below to select the crop area.</p>
+
+        <div style="position: relative; display: inline-block; max-height: 400px; max-width: 100%; overflow: auto; border: 1px solid var(--border-color); background: #f0f0f0;">
+            <canvas id="crop-canvas" style="display: block; cursor: crosshair; max-width: 100%;"></canvas>
+        </div>
+
+        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px;">
+            <button type="button" id="crop-save-btn" class="primary" style="padding: 10px 20px; font-weight: bold; background-color: var(--primary-color);">Crop & Save</button>
+            <button type="button" id="crop-cancel-btn" class="secondary" style="padding: 10px 20px; font-weight: bold;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Doodle Board Modal -->
+<div id="doodle-modal" class="modal hidden" style="z-index: 1002;">
+    <div class="modal-content" style="max-width: 500px; padding: 20px; text-align: center;">
+        <h3 style="margin-top: 0; margin-bottom: 10px;">Doodle Board</h3>
+        <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Draw your sketch below and click send!</p>
+        
+        <div style="border: 2px solid var(--border-color); background-color: white; border-radius: 8px; overflow: hidden; position: relative; margin-bottom: 15px;">
+            <canvas id="doodle-canvas" width="450" height="350" style="display: block; cursor: crosshair; touch-action: none; background-color: white; max-width: 100%;"></canvas>
+        </div>
+        
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 15px; margin-bottom: 15px;">
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <label for="doodle-color" style="font-size: 13px; font-weight: bold;">Color:</label>
+                <input type="color" id="doodle-color" value="#000000" style="border: none; width: 35px; height: 35px; cursor: pointer; padding: 0; background: none;" />
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <label for="doodle-size" style="font-size: 13px; font-weight: bold;">Size:</label>
+                <input type="range" id="doodle-size" min="1" max="20" value="3" style="width: 80px;" />
+                <span id="doodle-size-val" style="font-size: 12px; font-weight: bold; width: 15px;">3</span>
+            </div>
+            
+            <button type="button" id="doodle-clear-btn" class="secondary" style="padding: 5px 12px; font-size: 12px; font-weight: bold; min-height: auto; width: auto; height: auto; box-shadow: none;">Clear Canvas</button>
+        </div>
+        
+        <div style="display: flex; justify-content: center; gap: 15px;">
+            <button type="button" id="doodle-send-btn" class="primary" style="padding: 10px 20px; font-weight: bold; background-color: var(--primary-color);">Send Doodle</button>
+            <button type="button" id="doodle-cancel-btn" class="secondary" style="padding: 10px 20px; font-weight: bold;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Support Phone Modal -->
+<div id="support-phone-modal" class="modal hidden" style="z-index: 1003;">
+    <div class="modal-content" style="max-width: 400px; padding: 25px; text-align: center;">
+        <h3 style="margin-top: 0; margin-bottom: 10px;">Contact Customer Support</h3>
+        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Please enter your phone number so support agents can reach you.</p>
+        <div class="form-group">
+            <input type="tel" id="support-phone-input" placeholder="Enter Phone Number" autocomplete="off" class="form-control" style="border-radius: 20px; padding: 10px 15px; border: 1px solid var(--border-color); text-align: center; font-weight: bold;" required />
+        </div>
+        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px;">
+            <button type="button" id="support-submit-phone-btn" class="primary" style="padding: 10px 20px; font-weight: bold; background-color: var(--primary-color);">Next</button>
+            <button type="button" id="support-cancel-phone-btn" class="secondary" style="padding: 10px 20px; font-weight: bold;">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Support Options Modal -->
+<div id="support-options-modal" class="modal hidden" style="z-index: 1004;">
+    <div class="modal-content" style="max-width: 400px; padding: 25px; text-align: center;">
+        <h3 style="margin-top: 0; margin-bottom: 10px;">Select Assistance Type</h3>
+        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">How would you like to connect with our support team?</p>
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+            <button type="button" id="support-chat-btn" class="primary" style="padding: 12px; font-weight: bold; background-color: var(--primary-color); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <span>Chat with Customer Support</span>
+            </button>
+            <button type="button" id="support-call-btn" class="primary" style="padding: 12px; font-weight: bold; background-color: #2ec4b6; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                <span>Call Assistance</span>
+            </button>
+        </div>
+        <button type="button" id="support-cancel-options-btn" class="secondary" style="padding: 10px 20px; font-weight: bold; width: 100%;">Cancel</button>
+    </div>
+</div>
+
+<!-- Support Call Screen Overlay -->
+<div id="support-call-screen" class="modal hidden" style="z-index: 2000; background-color: rgba(19, 25, 36, 0.95);">
+    <div style="text-align: center; color: white; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 80%; width: 100%; max-width: 400px; padding: 40px 20px; margin: 0 auto;">
+        <div style="margin-top: 40px;">
+            <div style="width: 100px; height: 100px; background-color: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px;">📞</div>
+            <h2 id="call-screen-title" style="margin: 0 0 10px 0; font-size: 24px; color: white;">Calling Customer Support</h2>
+            <p id="call-screen-number" style="margin: 0; font-size: 16px; color: #888;">+1 (754) 300-8650</p>
+            <p id="call-screen-status" style="margin: 20px 0 0 0; font-size: 18px; font-style: italic; color: var(--primary-color);">Ringing...</p>
+        </div>
+
+        <!-- Incoming Call Actions (Hidden for Caller, Visible for Receiver) -->
+        <div id="incoming-call-actions" class="hidden" style="display: flex; gap: 40px; margin-bottom: 20px; justify-content: center; width: 100%;">
+            <button type="button" id="accept-call-btn" style="background-color: #2ec4b6; color: white; border: none; width: 70px; height: 70px; border-radius: 50%; cursor: pointer; font-size: 24px; box-shadow: 0 4px 15px rgba(46, 196, 182, 0.4); display: flex; align-items: center; justify-content: center; min-height: auto; padding: 0;">✔</button>
+            <button type="button" id="decline-call-btn" style="background-color: #ff4743; color: white; border: none; width: 70px; height: 70px; border-radius: 50%; cursor: pointer; font-size: 24px; box-shadow: 0 4px 15px rgba(255, 71, 67, 0.4); display: flex; align-items: center; justify-content: center; min-height: auto; padding: 0;">✖</button>
+        </div>
+
+        <!-- Outgoing / Connected Call Actions -->
+        <div id="active-call-actions" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 30px;">
+            <div style="display: flex; justify-content: center; gap: 30px;">
+                <button type="button" style="background: rgba(255,255,255,0.1); border: none; width: 50px; height: 50px; border-radius: 50%; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: auto; padding: 0;">🎙️</button>
+                <button type="button" style="background: rgba(255,255,255,0.1); border: none; width: 50px; height: 50px; border-radius: 50%; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: auto; padding: 0;">🔊</button>
+            </div>
+            <button type="button" id="end-call-btn" style="background-color: #ff4743; color: white; border: none; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(255, 71, 67, 0.4); min-height: auto; padding: 0;">📵</button>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.1.4/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<!-- Firebase App and Auth compat SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="/js/firebase-config.js?v=6"></script>
+<script src="/js/main.js?v=6"></script>
+</body>
+</html>

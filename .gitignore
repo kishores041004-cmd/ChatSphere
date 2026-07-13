@@ -1,0 +1,17 @@
+# IDE settings
+.idea/
+*.iml
+
+# Firebase and OAuth Secrets
+oAuth Client/
+**/client_secret_*.json
+
+# Spring Boot build files
+spring-boot-websocket-chat-demo-master/target/
+spring-boot-websocket-chat-demo-master/.mvn/
+spring-boot-websocket-chat-demo-master/mvnw
+spring-boot-websocket-chat-demo-master/mvnw.cmd
+spring-boot-websocket-chat-demo-master/target/
+*.class
+*.jar
+*.war
