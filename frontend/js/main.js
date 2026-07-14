@@ -5,7 +5,7 @@
 // Replace this with your actual deployed Spring Boot backend URL on Render.
 const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8080'
-    : 'https://chatsphere-teqo.onrender.com'; // Deployed Render Backend URL
+    : 'https://kishores-chat-sphere.onrender.com'; // Deployed Render Backend URL
 
 // Intercept relative fetch calls to point to the backend and include cookies (credentials)
 const originalFetch = window.fetch;
