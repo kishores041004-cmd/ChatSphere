@@ -4,7 +4,7 @@
 // When running standalone (e.g. port 3000 via npm run dev), direct /api and /ws calls to Spring Boot backend at http://localhost:8080
 const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? (window.location.port === '8080' ? '' : 'http://localhost:8080')
-    : 'https://chatsphere-teqo.onrender.com';
+    : 'https://kishore-chatsphere-backend.onrender.com';
 
 // Intercept relative fetch calls to point to the backend and include cookies (credentials)
 const originalFetch = window.fetch;
