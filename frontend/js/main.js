@@ -1,17 +1,16 @@
 'use strict';
 
 // Configure Backend API URL
-// For local testing, it defaults to localhost:8080.
-// Replace this with your actual deployed Spring Boot backend URL on Render.
-const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8080'
-    : 'https://kishores-chat-sphere.onrender.com'; // Deployed Render Backend URL
+// When running standalone (e.g. port 3000 via npm run dev), direct /api and /ws calls to Spring Boot backend at http://localhost:8080
+const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? (window.location.port === '8080' ? '' : 'http://localhost:8080')
+    : 'https://chatsphere-teqo.onrender.com';
 
 // Intercept relative fetch calls to point to the backend and include cookies (credentials)
 const originalFetch = window.fetch;
 window.fetch = function (url, options = {}) {
     if (typeof url === 'string' && url.startsWith('/api')) {
-        url = BACKEND_URL + url;
+        url = (BACKEND_URL ? BACKEND_URL : '') + url;
         options.credentials = 'include';
     }
     return originalFetch(url, options);
@@ -409,7 +408,7 @@ function enterChatRoom(user) {
         .finally(function() {
             loadMyRooms();
             loadPrivateContacts();
-            var socket = new SockJS(BACKEND_URL + '/ws');
+            var socket = new SockJS((BACKEND_URL || '') + '/ws');
             stompClient = Stomp.over(socket);
 
             // Pass the username in the STOMP CONNECT headers to isolate tab sessions on the backend
