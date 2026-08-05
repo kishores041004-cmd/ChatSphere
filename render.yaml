@@ -16,3 +16,11 @@ services:
     rootDir: frontend
     buildCommand: ""
     staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://kishore-chatsphere-backend.onrender.com/api/*
+      - type: rewrite
+        source: /ws/*
+        destination: https://kishore-chatsphere-backend.onrender.com/ws/*
+

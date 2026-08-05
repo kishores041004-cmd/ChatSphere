@@ -1,10 +1,14 @@
 'use strict';
 
 // Configure Backend API URL
-// When running standalone (e.g. port 3000 via npm run dev), direct /api and /ws calls to Spring Boot backend at http://localhost:8080
-const BACKEND_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? (window.location.port === '8080' ? '' : 'http://localhost:8080')
-    : 'https://kishore-chatsphere-backend.onrender.com';
+// If window.BACKEND_URL is set, use it.
+// If running on a separate local dev port (e.g. port 3000 or 5500), point to http://localhost:8080.
+// Otherwise, default to empty string so requests use relative URLs on the current server/domain.
+const BACKEND_URL = (typeof window !== 'undefined' && window.BACKEND_URL !== undefined)
+    ? window.BACKEND_URL
+    : (((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '8080')
+        ? 'http://localhost:8080'
+        : '');
 
 // Intercept relative fetch calls to point to the backend and include cookies (credentials)
 const originalFetch = window.fetch;
@@ -213,23 +217,28 @@ toggleAuthMode.addEventListener('click', function(event) {
     }
 });
 
-// Toggle password visibility
-var passwordInput = document.querySelector('#password');
-var passwordToggleBtn = document.querySelector('#password-toggle-btn');
-
-passwordToggleBtn.addEventListener('click', function() {
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        passwordToggleBtn.innerHTML = '<svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye-off"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
-    } else {
-        passwordInput.type = 'password';
-        passwordToggleBtn.innerHTML = '<svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
-    }
-});
+// Auto-clear auth feedback errors when user starts typing
+var nameInputEl = document.querySelector('#name');
+if (nameInputEl) {
+    nameInputEl.addEventListener('input', function() {
+        if (authFeedback) authFeedback.textContent = '';
+    });
+}
+if (passwordInput) {
+    passwordInput.addEventListener('input', function() {
+        if (authFeedback) authFeedback.textContent = '';
+    });
+}
+if (googleNameInput) {
+    googleNameInput.addEventListener('input', function() {
+        if (authFeedback) authFeedback.textContent = '';
+    });
+}
 
 // Handle Login or Register Form Submit
 usernameForm.addEventListener('submit', function(event) {
     event.preventDefault();
+    if (authFeedback) authFeedback.textContent = '';
     
     var enteredUsername = document.querySelector('#name').value.trim();
     var enteredPassword = document.querySelector('#password').value;
@@ -252,7 +261,13 @@ usernameForm.addEventListener('submit', function(event) {
             body: JSON.stringify(payload)
         })
         .then(function(response) {
-            return response.json().then(function(data) {
+            return response.text().then(function(text) {
+                var data = {};
+                try {
+                    data = JSON.parse(text);
+                } catch(e) {
+                    data = { message: text };
+                }
                 if (response.ok) {
                     showFeedback('Registration successful! Please login.', 'green');
                     // Toggle to Login Mode
@@ -263,12 +278,13 @@ usernameForm.addEventListener('submit', function(event) {
                     toggleAuthMode.textContent = 'Register here';
                     document.querySelector('#password').value = '';
                 } else {
-                    showFeedback(data.message || 'Registration failed', 'red');
+                    showFeedback(data.message || ('Registration failed (Status ' + response.status + ')'), 'red');
                 }
             });
         })
         .catch(function(err) {
-            showFeedback('Server error. Please try again.', 'red');
+            console.error('Registration error:', err);
+            showFeedback('Unable to connect to server. Please try again.', 'red');
         });
     } else {
         // Login User
@@ -278,7 +294,13 @@ usernameForm.addEventListener('submit', function(event) {
             body: JSON.stringify(payload)
         })
         .then(function(response) {
-            return response.json().then(function(data) {
+            return response.text().then(function(text) {
+                var data = {};
+                try {
+                    data = JSON.parse(text);
+                } catch(e) {
+                    data = { message: text };
+                }
                 if (response.ok) {
                     username = data.username;
                     sessionStorage.setItem('chatUsername', username);
@@ -289,7 +311,8 @@ usernameForm.addEventListener('submit', function(event) {
             });
         })
         .catch(function(err) {
-            showFeedback('Server error. Please try again.', 'red');
+            console.error('Login error:', err);
+            showFeedback('Unable to connect to server. Please try again.', 'red');
         });
     }
 });
@@ -1320,6 +1343,7 @@ var firebaseIdToken = null; // Store idToken during registration flow
 
 if (googleLoginBtn) {
     googleLoginBtn.addEventListener('click', function() {
+        if (authFeedback) authFeedback.textContent = '';
         if (typeof firebase === 'undefined' || typeof firebaseConfig === 'undefined' || firebaseConfig.apiKey === 'YOUR_API_KEY') {
             showFeedback('Firebase is not configured yet. Please update js/firebase-config.js with your keys.', 'red');
             return;
@@ -1339,9 +1363,15 @@ if (googleLoginBtn) {
                 });
             })
             .then(function(response) {
-                return response.json().then(function(data) {
+                return response.text().then(function(text) {
+                    var data = {};
+                    try {
+                        data = JSON.parse(text);
+                    } catch(e) {
+                        data = { message: text };
+                    }
                     if (!response.ok) {
-                        showFeedback(data.message || 'Google Login failed', 'red');
+                        showFeedback(data.message || ('Google Login failed (Status ' + response.status + ')'), 'red');
                         return;
                     }
                     
