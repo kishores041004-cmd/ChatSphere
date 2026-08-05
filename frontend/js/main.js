@@ -3035,26 +3035,9 @@ function showTranslationMenu(text, messageElement, buttonElement) {
 }
 
 // ==========================================
-// GLOBAL SUPPORT MODAL FUNCTIONS (Instant inline onclick execution)
+// CUSTOMER SUPPORT HANDLERS (Direct Email Support - Hidden Email Address)
 // ==========================================
-window.openSupportOptions = function() {
-    var modal = document.getElementById('support-options-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.style.display = 'flex';
-    }
-};
-
-window.closeSupportOptions = function() {
-    var modal = document.getElementById('support-options-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-    }
-};
-
 window.openSupportEmail = function() {
-    window.closeSupportOptions();
     var modal = document.getElementById('support-email-modal');
     if (modal) {
         modal.classList.remove('hidden');
@@ -3081,50 +3064,15 @@ window.sendSupportEmail = function() {
     window.location.href = mailtoUrl;
 
     if (typeof showToast === 'function') {
-        showToast('Opening email client for kishore.s041004@gmail.com...', 'info');
+        showToast('Support request initiated! Opening your email app...', 'info');
     }
     window.closeSupportEmail();
-};
-
-window.openSupportCall = function() {
-    window.closeSupportOptions();
-    var callScreen = document.getElementById('support-call-screen');
-    if (callScreen) {
-        callScreen.classList.remove('hidden');
-        callScreen.style.display = 'flex';
-    }
-    window.location.href = 'tel:6381161207';
-    if (typeof showToast === 'function') {
-        showToast('Dialing Customer Support: +91 6381161207', 'info');
-    }
-};
-
-window.closeSupportCall = function() {
-    var callScreen = document.getElementById('support-call-screen');
-    if (callScreen) {
-        callScreen.classList.add('hidden');
-        callScreen.style.display = 'none';
-    }
 };
 
 // Document-level Event Delegation Fallback
 document.addEventListener('click', function(e) {
     var custBtn = e.target.closest('#customer-support-btn');
     if (custBtn) {
-        e.preventDefault();
-        window.openSupportOptions();
-        return;
-    }
-
-    var cancelOptBtn = e.target.closest('#support-cancel-options-btn');
-    if (cancelOptBtn) {
-        e.preventDefault();
-        window.closeSupportOptions();
-        return;
-    }
-
-    var chatBtn = e.target.closest('#support-chat-btn');
-    if (chatBtn) {
         e.preventDefault();
         window.openSupportEmail();
         return;
@@ -3141,20 +3089,6 @@ document.addEventListener('click', function(e) {
     if (sendEmailBtn) {
         e.preventDefault();
         window.sendSupportEmail();
-        return;
-    }
-
-    var callBtn = e.target.closest('#support-call-btn');
-    if (callBtn) {
-        e.preventDefault();
-        window.openSupportCall();
-        return;
-    }
-
-    var endBtn = e.target.closest('#end-call-btn');
-    if (endBtn) {
-        e.preventDefault();
-        window.closeSupportCall();
         return;
     }
 });

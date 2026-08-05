@@ -3,7 +3,7 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
     <title>ChatSphere | Real-Time Chat</title>
-    <link rel="stylesheet" href="css/main.css?v=10" />
+    <link rel="stylesheet" href="css/main.css?v=11" />
 </head>
 <body>
 <noscript>
@@ -141,8 +141,8 @@
                     </ul>
                 </div>
                 <div style="padding: 10px 15px; border-top: 1px solid var(--border-color); background-color: var(--sidebar-bg-color);">
-                    <button type="button" id="customer-support-btn" onclick="openSupportOptions()" style="width: 100%; padding: 10px; background-color: var(--primary-color); color: white; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; position: relative;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    <button type="button" id="customer-support-btn" onclick="openSupportEmail()" style="width: 100%; padding: 10px; background-color: var(--primary-color); color: white; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; position: relative;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                         <span>Customer Support</span>
                     </button>
                 </div>
@@ -368,64 +368,18 @@
     </div>
 </div>
 
-<!-- Support Options Modal -->
-<div id="support-options-modal" class="modal hidden" style="z-index: 9999; display: none;">
-    <div class="modal-content" style="max-width: 420px; padding: 25px; text-align: center;">
-        <h3 style="margin-top: 0; margin-bottom: 10px;">Customer Support</h3>
-        <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Choose how you would like to connect with Kishore Support:</p>
-        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-            <button type="button" id="support-chat-btn" onclick="openSupportEmail()" class="primary" style="padding: 12px; font-weight: bold; background-color: var(--primary-color); display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                <span>Email Support (kishore.s041004@gmail.com)</span>
-            </button>
-            <button type="button" id="support-call-btn" onclick="openSupportCall()" class="primary" style="padding: 12px; font-weight: bold; background-color: #2ec4b6; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                <span>Call Support (+91 6381161207)</span>
-            </button>
-        </div>
-        <button type="button" id="support-cancel-options-btn" onclick="closeSupportOptions()" class="secondary" style="padding: 10px 20px; font-weight: bold; width: 100%;">Cancel</button>
-    </div>
-</div>
-
-<!-- Support Email Composer Modal -->
+<!-- Support Email Composer Modal (No raw email address displayed) -->
 <div id="support-email-modal" class="modal hidden" style="z-index: 9999; display: none;">
     <div class="modal-content" style="max-width: 450px; padding: 25px; text-align: center;">
-        <h3 style="margin-top: 0; margin-bottom: 8px;">Email Customer Support</h3>
-        <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Send a message directly to <strong>kishore.s041004@gmail.com</strong></p>
+        <h3 style="margin-top: 0; margin-bottom: 8px;">Contact Customer Support</h3>
+        <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Send a message directly to our support team below.</p>
         <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
             <input type="text" id="support-email-subject" placeholder="Subject / Query Title" class="form-control" style="padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color);" />
             <textarea id="support-email-body" rows="4" placeholder="Type your support message here..." class="form-control" style="padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color); resize: vertical;"></textarea>
         </div>
         <div style="display: flex; justify-content: center; gap: 12px;">
-            <button type="button" id="send-support-email-btn" onclick="sendSupportEmail()" class="primary" style="padding: 10px 20px; font-weight: bold; background-color: var(--primary-color);">Send Email</button>
+            <button type="button" id="send-support-email-btn" onclick="sendSupportEmail()" class="primary" style="padding: 10px 20px; font-weight: bold; background-color: var(--primary-color);">Send Request</button>
             <button type="button" id="cancel-support-email-btn" onclick="closeSupportEmail()" class="secondary" style="padding: 10px 20px; font-weight: bold;">Cancel</button>
-        </div>
-    </div>
-</div>
-
-<!-- Support Call Screen Overlay -->
-<div id="support-call-screen" class="modal hidden" style="z-index: 9999; display: none;">
-    <div style="text-align: center; color: white; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 80%; width: 100%; max-width: 400px; padding: 40px 20px; margin: 0 auto;">
-        <div style="margin-top: 40px;">
-            <div style="width: 100px; height: 100px; background-color: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 40px;">📞</div>
-            <h2 id="call-screen-title" style="margin: 0 0 10px 0; font-size: 24px; color: white;">Calling Customer Support</h2>
-            <p id="call-screen-number" style="margin: 0; font-size: 18px; color: #2ec4b6; font-weight: bold;">+91 6381161207</p>
-            <p id="call-screen-status" style="margin: 20px 0 0 0; font-size: 18px; font-style: italic; color: var(--primary-color);">Connecting call...</p>
-        </div>
-
-        <!-- Incoming Call Actions (Hidden for Caller, Visible for Receiver) -->
-        <div id="incoming-call-actions" class="hidden" style="display: flex; gap: 40px; margin-bottom: 20px; justify-content: center; width: 100%;">
-            <button type="button" id="accept-call-btn" style="background-color: #2ec4b6; color: white; border: none; width: 70px; height: 70px; border-radius: 50%; cursor: pointer; font-size: 24px; box-shadow: 0 4px 15px rgba(46, 196, 182, 0.4); display: flex; align-items: center; justify-content: center; min-height: auto; padding: 0;">✔</button>
-            <button type="button" id="decline-call-btn" style="background-color: #ff4743; color: white; border: none; width: 70px; height: 70px; border-radius: 50%; cursor: pointer; font-size: 24px; box-shadow: 0 4px 15px rgba(255, 71, 67, 0.4); display: flex; align-items: center; justify-content: center; min-height: auto; padding: 0;">✖</button>
-        </div>
-
-        <!-- Outgoing / Connected Call Actions -->
-        <div id="active-call-actions" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 30px;">
-            <div style="display: flex; justify-content: center; gap: 30px;">
-                <button type="button" style="background: rgba(255,255,255,0.1); border: none; width: 50px; height: 50px; border-radius: 50%; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: auto; padding: 0;">🎙️</button>
-                <button type="button" style="background: rgba(255,255,255,0.1); border: none; width: 50px; height: 50px; border-radius: 50%; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: auto; padding: 0;">🔊</button>
-            </div>
-            <button type="button" id="end-call-btn" onclick="closeSupportCall()" style="background-color: #ff4743; color: white; border: none; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(255, 71, 67, 0.4); min-height: auto; padding: 0;">📵</button>
         </div>
     </div>
 </div>
@@ -454,7 +408,7 @@
 <!-- Firebase App and Auth compat SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="js/firebase-config.js?v=10"></script>
-<script src="js/main.js?v=10"></script>
+<script src="js/firebase-config.js?v=11"></script>
+<script src="js/main.js?v=11"></script>
 </body>
 </html>
