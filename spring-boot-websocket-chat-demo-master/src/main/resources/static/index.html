@@ -142,8 +142,8 @@
                 </div>
                 <div style="padding: 10px 15px; border-top: 1px solid var(--border-color); background-color: var(--sidebar-bg-color);">
                     <button type="button" id="customer-support-btn" onclick="openSupportEmail()" style="width: 100%; padding: 10px; background-color: var(--primary-color); color: white; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; position: relative;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                        <span>Customer Support</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        <span>Chat Support</span>
                     </button>
                 </div>
             </div>
@@ -371,14 +371,14 @@
 <!-- Support Email Composer Modal (No raw email address displayed) -->
 <div id="support-email-modal" class="modal hidden" style="z-index: 9999; display: none;">
     <div class="modal-content" style="max-width: 450px; padding: 25px; text-align: center;">
-        <h3 style="margin-top: 0; margin-bottom: 8px;">Contact Customer Support</h3>
+        <h3 style="margin-top: 0; margin-bottom: 8px;">Chat Support</h3>
         <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Send a message directly to our support team below.</p>
         <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
             <input type="text" id="support-email-subject" placeholder="Subject / Query Title" class="form-control" style="padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color);" />
             <textarea id="support-email-body" rows="4" placeholder="Type your support message here..." class="form-control" style="padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color); resize: vertical;"></textarea>
         </div>
         <div style="display: flex; justify-content: center; gap: 12px;">
-            <button type="button" id="send-support-email-btn" onclick="sendSupportEmail()" class="primary" style="padding: 10px 20px; font-weight: bold; background-color: var(--primary-color);">Send Request</button>
+            <button type="button" id="send-support-email-btn" onclick="sendSupportEmail()" class="primary" style="padding: 10px 20px; font-weight: bold; background-color: var(--primary-color);">Send Message</button>
             <button type="button" id="cancel-support-email-btn" onclick="closeSupportEmail()" class="secondary" style="padding: 10px 20px; font-weight: bold;">Cancel</button>
         </div>
     </div>

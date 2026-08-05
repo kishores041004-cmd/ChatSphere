@@ -3064,7 +3064,7 @@ window.sendSupportEmail = function() {
     window.location.href = mailtoUrl;
 
     if (typeof showToast === 'function') {
-        showToast('Support request initiated! Opening your email app...', 'info');
+        showToast('Chat Support request initiated! Opening email app...', 'info');
     }
     window.closeSupportEmail();
 };
