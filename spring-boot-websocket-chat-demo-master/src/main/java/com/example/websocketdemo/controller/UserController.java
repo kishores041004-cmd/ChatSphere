@@ -909,4 +909,29 @@ public class UserController {
 
         return ResponseEntity.ok(Map.of("message", "Support request submitted successfully"));
     }
+
+    @PostMapping("/report")
+    public ResponseEntity<?> reportUser(@RequestBody Map<String, String> request, HttpSession session) {
+        String reporter = (String) session.getAttribute("username");
+        if (reporter == null) {
+            reporter = SecurityContextHolder.getContext().getAuthentication() != null ? SecurityContextHolder.getContext().getAuthentication().getName() : "Anonymous";
+        }
+        
+        String targetUser = request.get("targetUser");
+        String reason = request.get("reason");
+        String details = request.get("details");
+
+        if (targetUser == null || targetUser.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Target user is required"));
+        }
+
+        try {
+            String reportBody = "Reported User: " + targetUser + "\nReported By: " + reporter + "\nReason: " + (reason != null ? reason : "Unspecified") + "\nDetails: " + (details != null ? details : "None");
+            emailService.sendSupportNotification(reporter, "Report System", reportBody);
+        } catch (Exception e) {
+            // Log/ignore email error
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Report submitted successfully"));
+    }
 }

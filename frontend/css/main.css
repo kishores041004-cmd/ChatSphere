@@ -1154,3 +1154,26 @@ button, input, select, textarea {
         transform: translateY(0) scale(1);
     }
 }
+
+/* Block & Report Button Styles */
+.block-msg-btn, .report-msg-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 2px 5px;
+    margin-right: 5px;
+    outline: none;
+    transition: color 0.2s ease;
+}
+
+.block-msg-btn:hover {
+    color: #ff9f1c;
+    text-decoration: underline;
+}
+
+.report-msg-btn:hover {
+    color: #ff4743;
+    text-decoration: underline;
+}

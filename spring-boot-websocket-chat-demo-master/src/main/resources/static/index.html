@@ -384,6 +384,29 @@
     </div>
 </div>
 
+<!-- Report User Modal -->
+<div id="report-user-modal" class="modal hidden" style="z-index: 9999; display: none;">
+    <div class="modal-content" style="max-width: 450px; padding: 25px; text-align: center;">
+        <h3 style="margin-top: 0; margin-bottom: 8px;">Report User</h3>
+        <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Report <strong id="report-username-target">User</strong> to moderation team.</p>
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; text-align: left;">
+            <label style="font-size: 12px; font-weight: bold; margin-bottom: -4px;">Reason for Report:</label>
+            <select id="report-reason-select" class="form-control" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 13px;">
+                <option value="Spam / Unsolicited messages">Spam / Unsolicited messages</option>
+                <option value="Harassment or Hate speech">Harassment or Hate speech</option>
+                <option value="Inappropriate / Explicit Content">Inappropriate / Explicit Content</option>
+                <option value="Impersonation / Fake Account">Impersonation / Fake Account</option>
+                <option value="Other">Other</option>
+            </select>
+            <textarea id="report-details-input" rows="3" placeholder="Provide additional details (optional)..." class="form-control" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 13px; resize: vertical;"></textarea>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <button type="button" id="submit-report-btn" onclick="submitUserReport()" class="primary" style="padding: 10px 20px; font-weight: bold; background-color: #ff4743; border: none; color: white; border-radius: 6px; cursor: pointer;">Submit Report</button>
+            <button type="button" onclick="closeReportModal()" class="secondary" style="padding: 10px 20px; font-weight: bold;">Cancel</button>
+        </div>
+    </div>
+</div>
+
 
 <!-- Custom Reusable Confirmation Modal -->
 <div id="custom-confirm-modal" class="modal-overlay">

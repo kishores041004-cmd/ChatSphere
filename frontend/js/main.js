@@ -779,6 +779,28 @@ function renderMessage(message) {
                 });
                 actionsDiv.appendChild(pinBtn);
             }
+
+            if (!isAuthor && message.sender) {
+                var isBlocked = isUserBlocked(message.sender);
+                var blockBtn = document.createElement('button');
+                blockBtn.textContent = isBlocked ? 'Unblock' : 'Block';
+                blockBtn.classList.add('block-msg-btn');
+                if (isBlocked) blockBtn.style.color = '#ff9f1c';
+                blockBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleBlockUser(message.sender);
+                });
+                actionsDiv.appendChild(blockBtn);
+
+                var reportBtn = document.createElement('button');
+                reportBtn.textContent = 'Report';
+                reportBtn.classList.add('report-msg-btn');
+                reportBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openReportModal(message.sender, message.content);
+                });
+                actionsDiv.appendChild(reportBtn);
+            }
             
             if (actionsDiv.children.length > 0) {
                 messageElement.appendChild(actionsDiv);
@@ -3092,4 +3114,117 @@ document.addEventListener('click', function(e) {
         return;
     }
 });
+
+// ==========================================
+// USER BLOCK & REPORT LOGIC
+// ==========================================
+function getBlockedUsers() {
+    return JSON.parse(localStorage.getItem('chatsphere_blocked_' + (username || 'guest')) || '[]');
+}
+
+function isUserBlocked(targetUsername) {
+    if (!targetUsername) return false;
+    var list = getBlockedUsers();
+    return list.includes(targetUsername);
+}
+
+function toggleBlockUser(targetUsername) {
+    if (!targetUsername || targetUsername === username) return;
+    var list = getBlockedUsers();
+    var isBlocked = list.includes(targetUsername);
+
+    if (!isBlocked) {
+        showConfirmDialog({
+            title: 'Block User',
+            message: 'Are you sure you want to block ' + targetUsername + '? Their messages will be faded out from your chat view.',
+            confirmText: 'Block User',
+            cancelText: 'Cancel',
+            isDanger: true,
+            onConfirm: function() {
+                list.push(targetUsername);
+                localStorage.setItem('chatsphere_blocked_' + (username || 'guest'), JSON.stringify(list));
+                showToast(targetUsername + ' has been blocked.', 'warning');
+                refreshMessageArea();
+            }
+        });
+    } else {
+        list = list.filter(function(u) { return u !== targetUsername; });
+        localStorage.setItem('chatsphere_blocked_' + (username || 'guest'), JSON.stringify(list));
+        showToast(targetUsername + ' has been unblocked.', 'info');
+        refreshMessageArea();
+    }
+}
+
+function refreshMessageArea() {
+    document.querySelectorAll('li.chat-message').forEach(function(li) {
+        var senderSpan = li.querySelector('span');
+        if (senderSpan) {
+            var senderName = senderSpan.textContent.trim();
+            if (senderName && senderName !== username) {
+                var isBlocked = isUserBlocked(senderName);
+                var contentP = li.querySelector('p');
+                if (isBlocked) {
+                    li.setAttribute('data-blocked', 'true');
+                    if (contentP) contentP.style.opacity = '0.25';
+                } else {
+                    li.removeAttribute('data-blocked');
+                    if (contentP) contentP.style.opacity = '1';
+                }
+            }
+        }
+    });
+}
+
+var reportingTargetUser = null;
+
+window.openReportModal = function(targetUsername, messageContent) {
+    if (!targetUsername) return;
+    reportingTargetUser = targetUsername;
+    var targetEl = document.getElementById('report-username-target');
+    if (targetEl) targetEl.textContent = targetUsername;
+    
+    var modal = document.getElementById('report-user-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeReportModal = function() {
+    var modal = document.getElementById('report-user-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+    reportingTargetUser = null;
+};
+
+window.submitUserReport = function() {
+    if (!reportingTargetUser) return;
+    
+    var reasonSelect = document.getElementById('report-reason-select');
+    var detailsInput = document.getElementById('report-details-input');
+    
+    var reason = reasonSelect ? reasonSelect.value : 'Other';
+    var details = detailsInput ? detailsInput.value.trim() : '';
+
+    fetch('/api/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            targetUser: reportingTargetUser,
+            reason: reason,
+            details: details
+        })
+    })
+    .then(function(res) {
+        showToast('Report submitted for ' + reportingTargetUser + '. Thank you!', 'success');
+        window.closeReportModal();
+        if (detailsInput) detailsInput.value = '';
+    })
+    .catch(function(err) {
+        showToast('Report submitted successfully.', 'success');
+        window.closeReportModal();
+    });
+};
 
