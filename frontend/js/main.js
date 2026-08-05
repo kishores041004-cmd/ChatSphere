@@ -701,6 +701,14 @@ function renderMessage(message) {
         var avatarText = document.createTextNode(senderName[0] || '?');
         avatarElement.appendChild(avatarText);
         avatarElement.style['background-color'] = getAvatarColor(senderName);
+        avatarElement.style.cursor = 'pointer';
+        avatarElement.title = 'Click profile photo to Report/Block ' + senderName;
+        avatarElement.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (senderName && senderName !== username) {
+                openUserProfileModal(senderName);
+            }
+        });
 
         messageElement.appendChild(avatarElement);
 
@@ -3226,5 +3234,59 @@ window.submitUserReport = function() {
         showToast('Report submitted successfully.', 'success');
         window.closeReportModal();
     });
+};
+
+// ==========================================
+// USER PROFILE MODAL HANDLERS
+// ==========================================
+var activeProfileModalUser = null;
+
+window.openUserProfileModal = function(targetUsername) {
+    if (!targetUsername || targetUsername === username) return;
+    activeProfileModalUser = targetUsername;
+    
+    var nameEl = document.getElementById('profile-modal-username');
+    if (nameEl) nameEl.textContent = targetUsername;
+    
+    var avatarEl = document.getElementById('profile-modal-avatar');
+    if (avatarEl) {
+        avatarEl.textContent = targetUsername[0] ? targetUsername[0].toUpperCase() : '?';
+        avatarEl.style.backgroundColor = getAvatarColor(targetUsername);
+    }
+    
+    var blockTextEl = document.getElementById('profile-block-btn-text');
+    if (blockTextEl) {
+        blockTextEl.textContent = isUserBlocked(targetUsername) ? 'Unblock User' : 'Block User';
+    }
+
+    var modal = document.getElementById('user-profile-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeUserProfileModal = function() {
+    var modal = document.getElementById('user-profile-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.triggerProfileReport = function() {
+    if (activeProfileModalUser) {
+        var target = activeProfileModalUser;
+        window.closeUserProfileModal();
+        openReportModal(target);
+    }
+};
+
+window.triggerProfileBlock = function() {
+    if (activeProfileModalUser) {
+        var target = activeProfileModalUser;
+        window.closeUserProfileModal();
+        toggleBlockUser(target);
+    }
 };
 
