@@ -64,7 +64,7 @@ public class FirebaseService {
         if (email == null || email.trim().isEmpty()) {
             String sub = (String) payload.get("sub");
             String userId = (String) payload.get("user_id");
-            String identifier = sub != null ? sub : (userId != null ? userId : "user_" + System.currentTimeMillis());
+            String identifier = sub != null ? sub : (userId != null ? userId : "user_" + Math.abs(cleanToken.hashCode()));
             email = identifier + "@google.com";
         }
         

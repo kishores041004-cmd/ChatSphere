@@ -33,11 +33,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
                     String username = accessor.getFirstNativeHeader("username");
-                    if (username != null) {
-                        String uniqueUsername = ActiveUserRegistry.makeUnique(username);
-                        accessor.getSessionAttributes().put("username", uniqueUsername);
-                        // Add to active users immediately so concurrent connections get different names
-                        ActiveUserRegistry.activeUsers.add(uniqueUsername);
+                    if (username != null && !username.trim().isEmpty()) {
+                        String cleanUser = username.trim();
+                        accessor.getSessionAttributes().put("username", cleanUser);
+                        ActiveUserRegistry.activeUsers.add(cleanUser);
                     }
                 }
                 return message;

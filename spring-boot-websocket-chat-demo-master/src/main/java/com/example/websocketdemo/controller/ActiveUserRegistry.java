@@ -7,12 +7,6 @@ public class ActiveUserRegistry {
     public static final Set<String> activeUsers = ConcurrentHashMap.newKeySet();
 
     public static String makeUnique(String baseUsername) {
-        String username = baseUsername;
-        int suffix = 1;
-        while (activeUsers.contains(username)) {
-            username = baseUsername + "_" + suffix;
-            suffix++;
-        }
-        return username;
+        return baseUsername;
     }
 }
