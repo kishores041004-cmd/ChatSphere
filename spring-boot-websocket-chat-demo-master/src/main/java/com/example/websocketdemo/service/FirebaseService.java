@@ -30,15 +30,49 @@ public class FirebaseService {
     }
 
     private FirebaseUserToken decodeTokenFallback(String idToken, boolean verified) throws Exception {
-        String[] parts = idToken.split("\\.");
+        if (idToken == null || idToken.trim().isEmpty()) {
+            throw new IllegalArgumentException("Token is empty");
+        }
+        String cleanToken = idToken.trim();
+        String[] parts = cleanToken.split("\\.");
         if (parts.length < 2) {
             throw new IllegalArgumentException("Invalid token format");
         }
-        String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+        
+        String payloadPart = parts[1];
+        int rem = payloadPart.length() % 4;
+        if (rem > 0) {
+            payloadPart += "=".repeat(4 - rem);
+        }
+        
+        byte[] decodedBytes;
+        try {
+            decodedBytes = Base64.getUrlDecoder().decode(payloadPart);
+        } catch (Exception e1) {
+            try {
+                decodedBytes = Base64.getDecoder().decode(payloadPart);
+            } catch (Exception e2) {
+                decodedBytes = Base64.getMimeDecoder().decode(payloadPart);
+            }
+        }
+        
+        String payloadJson = new String(decodedBytes, StandardCharsets.UTF_8);
         @SuppressWarnings("unchecked")
         Map<String, Object> payload = objectMapper.readValue(payloadJson, Map.class);
+        
         String email = (String) payload.get("email");
+        if (email == null || email.trim().isEmpty()) {
+            String sub = (String) payload.get("sub");
+            String userId = (String) payload.get("user_id");
+            String identifier = sub != null ? sub : (userId != null ? userId : "user_" + System.currentTimeMillis());
+            email = identifier + "@google.com";
+        }
+        
         String name = (String) payload.get("name");
+        if (name == null || name.trim().isEmpty()) {
+            name = email.contains("@") ? email.substring(0, email.indexOf("@")) : "googleuser";
+        }
+        
         return new FirebaseUserToken(email, name, verified);
     }
 
