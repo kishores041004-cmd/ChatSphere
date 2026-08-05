@@ -459,7 +459,11 @@ if (deleteAccountLink) {
             cancelText: 'Cancel',
             isDanger: true,
             onConfirm: function() {
-                fetch('/api/users/delete-me', { method: 'POST' })
+                fetch('/api/users/delete-me', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username })
+                })
                     .then(function(response) {
                         if (response.ok) {
                             if (stompClient) {

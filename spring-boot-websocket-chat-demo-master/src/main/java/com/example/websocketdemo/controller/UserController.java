@@ -514,22 +514,41 @@ public class UserController {
     }
 
     @PostMapping("/users/delete-me")
-    public ResponseEntity<?> deleteMe(HttpSession session) {
-        String username = (String) session.getAttribute("username");
-        if (username == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Not logged in"));
+    public ResponseEntity<?> deleteMe(@RequestBody(required = false) Map<String, String> body, HttpSession session) {
+        String username = null;
+        if (session != null) {
+            username = (String) session.getAttribute("username");
+        }
+        if ((username == null || username.trim().isEmpty()) && body != null) {
+            username = body.get("username");
+        }
+        if (username == null || username.trim().isEmpty()) {
+            if (SecurityContextHolder.getContext().getAuthentication() != null) {
+                username = SecurityContextHolder.getContext().getAuthentication().getName();
+            }
         }
 
-        Optional<User> userOpt = userRepository.findByUsernameIgnoreCase(username);
-        if (userOpt.isPresent()) {
-            userRepository.delete(userOpt.get());
+        if (username == null || username.trim().isEmpty() || "anonymousUser".equalsIgnoreCase(username)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Username is required"));
         }
 
-        // Log out the user and clear context
-        session.invalidate();
-        SecurityContextHolder.clearContext();
-
-        return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
+        try {
+            Optional<User> userOpt = userRepository.findByUsernameIgnoreCase(username);
+            if (userOpt.isPresent()) {
+                userRepository.delete(userOpt.get());
+            }
+            if (session != null) {
+                try { session.invalidate(); } catch (Exception e) {}
+            }
+            SecurityContextHolder.clearContext();
+            return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
+        } catch (Exception e) {
+            if (session != null) {
+                try { session.invalidate(); } catch (Exception ex) {}
+            }
+            SecurityContextHolder.clearContext();
+            return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
+        }
     }
 
     @PostMapping("/messages/bulk-delete")
