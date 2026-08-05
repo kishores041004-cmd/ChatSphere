@@ -217,6 +217,23 @@ toggleAuthMode.addEventListener('click', function(event) {
     }
 });
 
+// Toggle password visibility
+var passwordInput = document.querySelector('#password');
+var passwordToggleBtn = document.querySelector('#password-toggle-btn');
+
+if (passwordToggleBtn && passwordInput) {
+    passwordToggleBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            passwordToggleBtn.innerHTML = '<svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-eye-off"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+        } else {
+            passwordInput.type = 'password';
+            passwordToggleBtn.innerHTML = '<svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+        }
+    });
+}
+
 // Auto-clear auth feedback errors when user starts typing
 var nameInputEl = document.querySelector('#name');
 if (nameInputEl) {
@@ -254,7 +271,7 @@ usernameForm.addEventListener('submit', function(event) {
     };
 
     if (authMode === 'register') {
-        // Register User
+        // Register User & Auto Login
         fetch('/api/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -269,14 +286,10 @@ usernameForm.addEventListener('submit', function(event) {
                     data = { message: text };
                 }
                 if (response.ok) {
-                    showFeedback('Registration successful! Please login.', 'green');
-                    // Toggle to Login Mode
-                    authMode = 'login';
-                    authTitle.textContent = 'Login to ChatSphere';
-                    authSubmit.textContent = 'Login';
-                    toggleMessage.textContent = "Don't have an account?";
-                    toggleAuthMode.textContent = 'Register here';
-                    document.querySelector('#password').value = '';
+                    showFeedback('Registration successful! Logging in...', 'green');
+                    username = payload.username;
+                    sessionStorage.setItem('chatUsername', username);
+                    enterChatRoom(username);
                 } else {
                     showFeedback(data.message || ('Registration failed (Status ' + response.status + ')'), 'red');
                 }
@@ -408,6 +421,7 @@ if (clearChatBtn) {
 }
 
 function enterChatRoom(user) {
+    username = user;
     loggedInUserSpan.textContent = user;
     usernamePage.classList.add('hidden');
     chatPage.classList.remove('hidden');
@@ -1341,6 +1355,60 @@ if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && 
 var googleLoginBtn = document.querySelector('#google-login-btn');
 var firebaseIdToken = null; // Store idToken during registration flow
 
+function processGoogleAuthToken(idToken) {
+    firebaseIdToken = idToken;
+    fetch('/api/firebase-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: idToken })
+    })
+    .then(function(response) {
+        return response.text().then(function(text) {
+            var data = {};
+            try {
+                data = JSON.parse(text);
+            } catch(e) {
+                data = { message: text };
+            }
+            if (!response.ok) {
+                showFeedback(data.message || ('Google Login failed (Status ' + response.status + ')'), 'red');
+                return;
+            }
+            
+            if (data.status === 'username_required') {
+                usernamePage.classList.add('hidden');
+                googleUsernamePage.classList.remove('hidden');
+                var defaultName = data.googleName;
+                if (data.email && data.email.includes('@')) {
+                    defaultName = data.email.split('@')[0];
+                }
+                googleNameInput.value = defaultName || '';
+            } else {
+                username = data.username;
+                sessionStorage.setItem('chatUsername', username);
+                enterChatRoom(username);
+            }
+        });
+    })
+    .catch(function(err) {
+        console.error('Google Auth Error:', err);
+        showFeedback('Google Authentication error: ' + err.message, 'red');
+    });
+}
+
+// Mobile Redirect Fallback check on load
+if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().getRedirectResult().then(function(result) {
+        if (result && result.user) {
+            result.user.getIdToken().then(function(idToken) {
+                processGoogleAuthToken(idToken);
+            });
+        }
+    }).catch(function(err) {
+        console.error('Google Redirect Error:', err);
+    });
+}
+
 if (googleLoginBtn) {
     googleLoginBtn.addEventListener('click', function() {
         if (authFeedback) authFeedback.textContent = '';
@@ -1350,53 +1418,27 @@ if (googleLoginBtn) {
         }
 
         var provider = new firebase.auth.GoogleAuthProvider();
-        firebase.auth().signInWithPopup(provider)
-            .then(function(result) {
-                return result.user.getIdToken();
-            })
-            .then(function(idToken) {
-                firebaseIdToken = idToken;
-                return fetch('/api/firebase-login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ idToken: idToken })
-                });
-            })
-            .then(function(response) {
-                return response.text().then(function(text) {
-                    var data = {};
-                    try {
-                        data = JSON.parse(text);
-                    } catch(e) {
-                        data = { message: text };
-                    }
-                    if (!response.ok) {
-                        showFeedback(data.message || ('Google Login failed (Status ' + response.status + ')'), 'red');
-                        return;
-                    }
-                    
-                    if (data.status === 'username_required') {
-                        // Show Google Username selection screen
-                        usernamePage.classList.add('hidden');
-                        googleUsernamePage.classList.remove('hidden');
-                        
-                        var defaultName = data.googleName;
-                        if (data.email && data.email.includes('@')) {
-                            defaultName = data.email.split('@')[0];
-                        }
-                        googleNameInput.value = defaultName || '';
+        var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            firebase.auth().signInWithRedirect(provider);
+        } else {
+            firebase.auth().signInWithPopup(provider)
+                .then(function(result) {
+                    return result.user.getIdToken();
+                })
+                .then(function(idToken) {
+                    processGoogleAuthToken(idToken);
+                })
+                .catch(function(err) {
+                    if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
+                        firebase.auth().signInWithRedirect(provider);
                     } else {
-                        // Already registered, enter chat room directly
-                        username = data.username;
-                        sessionStorage.setItem('chatUsername', username);
-                        enterChatRoom(username);
+                        console.error('Google Auth Error:', err);
+                        showFeedback('Google Authentication error: ' + err.message, 'red');
                     }
                 });
-            })
-            .catch(function(err) {
-                console.error('Google Auth Error:', err);
-                showFeedback('Google Authentication error: ' + err.message, 'red');
-            });
+        }
     });
 }
 
