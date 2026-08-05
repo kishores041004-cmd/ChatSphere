@@ -20,6 +20,93 @@ window.fetch = function (url, options = {}) {
     return originalFetch(url, options);
 };
 
+// Reusable Custom Confirmation Modal Function
+function showConfirmDialog(options) {
+    const modal = document.getElementById('custom-confirm-modal');
+    const titleEl = document.getElementById('custom-modal-title');
+    const messageEl = document.getElementById('custom-modal-message');
+    const iconBox = document.getElementById('custom-modal-icon-box');
+    const confirmBtn = document.getElementById('custom-modal-confirm-btn');
+    const cancelBtn = document.getElementById('custom-modal-cancel-btn');
+
+    if (!modal || !confirmBtn || !cancelBtn) return;
+
+    titleEl.textContent = options.title || 'Confirm Action';
+    messageEl.textContent = options.message || 'Are you sure you want to proceed?';
+    confirmBtn.textContent = options.confirmText || 'Confirm';
+    cancelBtn.textContent = options.cancelText || 'Cancel';
+
+    if (options.isDanger === false) {
+        confirmBtn.className = 'custom-modal-btn custom-modal-btn-primary';
+        iconBox.className = 'custom-modal-icon info';
+    } else {
+        confirmBtn.className = 'custom-modal-btn custom-modal-btn-danger';
+        iconBox.className = 'custom-modal-icon';
+    }
+
+    modal.classList.add('active');
+
+    function cleanup() {
+        modal.classList.remove('active');
+        confirmBtn.removeEventListener('click', onConfirm);
+        cancelBtn.removeEventListener('click', onCancel);
+        modal.removeEventListener('click', onOverlayClick);
+    }
+
+    function onConfirm() {
+        cleanup();
+        if (typeof options.onConfirm === 'function') {
+            options.onConfirm();
+        }
+    }
+
+    function onCancel() {
+        cleanup();
+        if (typeof options.onCancel === 'function') {
+            options.onCancel();
+        }
+    }
+
+    function onOverlayClick(e) {
+        if (e.target === modal) {
+            onCancel();
+        }
+    }
+
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtn.addEventListener('click', onCancel);
+    modal.addEventListener('click', onOverlayClick);
+}
+
+// Reusable Toast Notification Function
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) {
+        alert(message);
+        return;
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type}`;
+
+    let iconSymbol = 'ℹ️';
+    if (type === 'error') iconSymbol = '⚠️';
+    if (type === 'success') iconSymbol = '✅';
+    if (type === 'warning') iconSymbol = '🔔';
+
+    toast.innerHTML = `<span>${iconSymbol}</span><span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('fade-out');
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, 4000);
+}
+
 var usernamePage = document.querySelector('#username-page');
 var chatPage = document.querySelector('#chat-page');
 var usernameForm = document.querySelector('#usernameForm');
@@ -365,37 +452,44 @@ if (deleteAccountLink) {
     deleteAccountLink.addEventListener('click', function(event) {
         event.preventDefault();
         
-        if (confirm('Are you sure you want to delete your account forever? This action cannot be undone.')) {
-            fetch('/api/users/delete-me', { method: 'POST' })
-                .then(function(response) {
-                    if (response.ok) {
-                        if (stompClient) {
-                            stompClient.disconnect();
+        showConfirmDialog({
+            title: 'Delete Account',
+            message: 'Are you sure you want to delete your account forever? This action cannot be undone.',
+            confirmText: 'Delete Account',
+            cancelText: 'Cancel',
+            isDanger: true,
+            onConfirm: function() {
+                fetch('/api/users/delete-me', { method: 'POST' })
+                    .then(function(response) {
+                        if (response.ok) {
+                            if (stompClient) {
+                                stompClient.disconnect();
+                            }
+                            sessionStorage.removeItem('chatUsername');
+                            username = null;
+                            messageArea.innerHTML = '';
+                            
+                            // Clear inputs
+                            document.querySelector('#name').value = '';
+                            document.querySelector('#password').value = '';
+                            authFeedback.textContent = '';
+                            
+                            // Show Login page
+                            chatPage.classList.add('hidden');
+                            googleUsernamePage.classList.add('hidden');
+                            usernamePage.classList.remove('hidden');
+                            
+                            showToast('Your account has been deleted forever.', 'success');
+                        } else {
+                            showToast('Could not delete account. Please try again.', 'error');
                         }
-                        sessionStorage.removeItem('chatUsername');
-                        username = null;
-                        messageArea.innerHTML = '';
-                        
-                        // Clear inputs
-                        document.querySelector('#name').value = '';
-                        document.querySelector('#password').value = '';
-                        authFeedback.textContent = '';
-                        
-                        // Show Login page
-                        chatPage.classList.add('hidden');
-                        googleUsernamePage.classList.add('hidden');
-                        usernamePage.classList.remove('hidden');
-                        
-                        alert('Your account has been deleted forever.');
-                    } else {
-                        alert('Could not delete account. Please try again.');
-                    }
-                })
-                .catch(function(err) {
-                    console.error('Delete account error:', err);
-                    alert('Error communicating with server.');
-                });
-        }
+                    })
+                    .catch(function(err) {
+                        console.error('Delete account error:', err);
+                        showToast('Error communicating with server.', 'error');
+                    });
+            }
+        });
     });
 }
 
@@ -405,18 +499,28 @@ if (clearChatBtn) {
         event.preventDefault();
         
         var targetRoomName = currentRoomId ? 'this custom group' : 'the public group';
-        if (confirm('Are you sure you want to clear all chat messages in ' + targetRoomName + '? This will delete them for everyone.')) {
-            var url = currentRoomId ? '/api/rooms/' + currentRoomId + '/clear' : '/api/history/clear';
-            fetch(url, { method: 'POST' })
-                .then(function(response) {
-                    if (!response.ok) {
-                        alert('Could not clear chat history.');
-                    }
-                })
-                .catch(function(err) {
-                    console.error('Clear chat error:', err);
-                });
-        }
+        showConfirmDialog({
+            title: 'Clear Chat History',
+            message: 'Are you sure you want to clear all chat messages in ' + targetRoomName + '? This will delete them for everyone.',
+            confirmText: 'Clear Messages',
+            cancelText: 'Cancel',
+            isDanger: true,
+            onConfirm: function() {
+                var url = currentRoomId ? '/api/rooms/' + currentRoomId + '/clear' : '/api/history/clear';
+                fetch(url, { method: 'POST' })
+                    .then(function(response) {
+                        if (!response.ok) {
+                            showToast('Could not clear chat history.', 'error');
+                        } else {
+                            showToast('Chat history cleared successfully.', 'success');
+                        }
+                    })
+                    .catch(function(err) {
+                        console.error('Clear chat error:', err);
+                        showToast('Error clearing chat history.', 'error');
+                    });
+            }
+        });
     });
 }
 
@@ -731,7 +835,7 @@ function renderMessage(message) {
                     original.style.backgroundColor = oldBg;
                 }, 1000);
             } else {
-                alert('Original message was deleted or is not loaded in this session.');
+                showToast('Original message was deleted or is not loaded in this session.', 'warning');
             }
         });
         messageElement.appendChild(replyDiv);
@@ -1272,7 +1376,7 @@ if (newGroupForm) {
                 });
             } else {
                 return response.json().then(function(err) {
-                    alert(err.message || 'Could not create group');
+                    showToast(err.message || 'Could not create group', 'error');
                 });
             }
         })
@@ -1463,12 +1567,12 @@ if (googleUsernameForm) {
                         googleUsernamePage.classList.add('hidden');
                         enterChatRoom(username);
                     } else {
-                        alert(data.message || 'Could not complete registration');
+                        showToast(data.message || 'Could not complete registration', 'error');
                     }
                 });
             })
             .catch(function(err) {
-                alert('Server error during registration');
+                showToast('Server error during registration', 'error');
             });
         }
     });
@@ -1547,12 +1651,19 @@ function initiateEditMessage(messageId) {
 }
 
 function requestDeleteMessage(messageId) {
-    if (confirm("Are you sure you want to delete this message?")) {
-        stompClient.send("/app/chat.deleteMessage", {}, JSON.stringify({
-            id: messageId,
-            type: 'DELETE'
-        }));
-    }
+    showConfirmDialog({
+        title: 'Delete Message',
+        message: 'Are you sure you want to delete this message?',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        isDanger: true,
+        onConfirm: function() {
+            stompClient.send("/app/chat.deleteMessage", {}, JSON.stringify({
+                id: messageId,
+                type: 'DELETE'
+            }));
+        }
+    });
 }
 
 // Group Info Modal Helper Logic
@@ -1711,18 +1822,31 @@ if (submitAddMembersBtn) {
 
 if (exitGroupBtn) {
     exitGroupBtn.addEventListener('click', function() {
-        if (confirm("Are you sure you want to exit this group?")) {
-            fetch('/api/rooms/' + currentRoomId + '/exit', {
-                method: 'POST'
-            })
-            .then(function(response) {
-                if (response.ok) {
-                    closeGroupInfoModal();
-                    selectRoom(null, '01. Random Group');
-                    loadMyRooms();
-                }
-            });
-        }
+        showConfirmDialog({
+            title: 'Exit Group',
+            message: 'Are you sure you want to exit this group?',
+            confirmText: 'Exit Group',
+            cancelText: 'Cancel',
+            isDanger: true,
+            onConfirm: function() {
+                fetch('/api/rooms/' + currentRoomId + '/exit', {
+                    method: 'POST'
+                })
+                .then(function(response) {
+                    if (response.ok) {
+                        closeGroupInfoModal();
+                        selectRoom(null, '01. Random Group');
+                        loadMyRooms();
+                        showToast('You left the group.', 'info');
+                    } else {
+                        showToast('Failed to exit group.', 'error');
+                    }
+                })
+                .catch(function(err) {
+                    showToast('Error leaving group.', 'error');
+                });
+            }
+        });
     });
 }
 
@@ -1955,7 +2079,7 @@ function performBulkDelete(ids, type) {
             }
             exitSelectionMode();
         } else {
-            alert('Could not delete message(s).');
+            showToast('Could not delete message(s).', 'error');
         }
     })
     .catch(function(err) {
@@ -2210,7 +2334,7 @@ if (attachBtn && fileAttachmentInput) {
         var file = e.target.files[0];
         if (file) {
             if (file.size > 2.5 * 1024 * 1024) {
-                alert('File size exceeds the 2.5MB limit.');
+                showToast('File size exceeds the 2.5MB limit.', 'error');
                 fileAttachmentInput.value = '';
                 return;
             }
@@ -2329,7 +2453,7 @@ function startRecording() {
             messageInput.disabled = true;
         })
         .catch(function(err) {
-            alert('Could not access microphone: ' + err.message);
+            showToast('Could not access microphone: ' + err.message, 'error');
         });
 }
 
@@ -2902,10 +3026,136 @@ function showTranslationMenu(text, messageElement, buttonElement) {
                 menu.remove();
             })
             .catch(function(err) {
-                alert('Translation failed.');
+                showToast('Translation failed.', 'error');
                 menu.disabled = false;
             });
     });
 
     buttonElement.parentNode.appendChild(menu);
 }
+
+// ==========================================
+// GLOBAL SUPPORT MODAL FUNCTIONS (Instant inline onclick execution)
+// ==========================================
+window.openSupportOptions = function() {
+    var modal = document.getElementById('support-options-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeSupportOptions = function() {
+    var modal = document.getElementById('support-options-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.openSupportEmail = function() {
+    window.closeSupportOptions();
+    var modal = document.getElementById('support-email-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+};
+
+window.closeSupportEmail = function() {
+    var modal = document.getElementById('support-email-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+};
+
+window.sendSupportEmail = function() {
+    var subjectInput = document.getElementById('support-email-subject');
+    var bodyInput = document.getElementById('support-email-body');
+    var subject = subjectInput ? subjectInput.value.trim() : 'ChatSphere Support Request';
+    var body = bodyInput ? bodyInput.value.trim() : '';
+    if (!subject) subject = 'ChatSphere Customer Support Request';
+
+    var mailtoUrl = 'mailto:kishore.s041004@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    window.location.href = mailtoUrl;
+
+    if (typeof showToast === 'function') {
+        showToast('Opening email client for kishore.s041004@gmail.com...', 'info');
+    }
+    window.closeSupportEmail();
+};
+
+window.openSupportCall = function() {
+    window.closeSupportOptions();
+    var callScreen = document.getElementById('support-call-screen');
+    if (callScreen) {
+        callScreen.classList.remove('hidden');
+        callScreen.style.display = 'flex';
+    }
+    window.location.href = 'tel:6381161207';
+    if (typeof showToast === 'function') {
+        showToast('Dialing Customer Support: +91 6381161207', 'info');
+    }
+};
+
+window.closeSupportCall = function() {
+    var callScreen = document.getElementById('support-call-screen');
+    if (callScreen) {
+        callScreen.classList.add('hidden');
+        callScreen.style.display = 'none';
+    }
+};
+
+// Document-level Event Delegation Fallback
+document.addEventListener('click', function(e) {
+    var custBtn = e.target.closest('#customer-support-btn');
+    if (custBtn) {
+        e.preventDefault();
+        window.openSupportOptions();
+        return;
+    }
+
+    var cancelOptBtn = e.target.closest('#support-cancel-options-btn');
+    if (cancelOptBtn) {
+        e.preventDefault();
+        window.closeSupportOptions();
+        return;
+    }
+
+    var chatBtn = e.target.closest('#support-chat-btn');
+    if (chatBtn) {
+        e.preventDefault();
+        window.openSupportEmail();
+        return;
+    }
+
+    var cancelEmailBtn = e.target.closest('#cancel-support-email-btn');
+    if (cancelEmailBtn) {
+        e.preventDefault();
+        window.closeSupportEmail();
+        return;
+    }
+
+    var sendEmailBtn = e.target.closest('#send-support-email-btn');
+    if (sendEmailBtn) {
+        e.preventDefault();
+        window.sendSupportEmail();
+        return;
+    }
+
+    var callBtn = e.target.closest('#support-call-btn');
+    if (callBtn) {
+        e.preventDefault();
+        window.openSupportCall();
+        return;
+    }
+
+    var endBtn = e.target.closest('#end-call-btn');
+    if (endBtn) {
+        e.preventDefault();
+        window.closeSupportCall();
+        return;
+    }
+});
+
