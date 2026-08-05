@@ -1344,7 +1344,10 @@ if (storedUser) {
             sessionStorage.removeItem('chatUsername');
             usernamePage.classList.remove('hidden');
             chatPage.classList.add('hidden');
-   // Initialize Firebase (only if config is provided and configured)
+        });
+}
+
+// Initialize Firebase (only if config is provided and configured)
 if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey !== 'YOUR_API_KEY') {
     firebase.initializeApp(firebaseConfig);
 }
@@ -1409,7 +1412,7 @@ if (typeof firebase !== 'undefined' && firebase.auth) {
 if (googleLoginBtn) {
     googleLoginBtn.addEventListener('click', function() {
         if (authFeedback) authFeedback.textContent = '';
-        if (typeof firebase === 'undefined' || typeof firebaseConfig === 'undefined' || firebaseConfig.apiKey !== 'YOUR_API_KEY') {
+        if (typeof firebase === 'undefined' || typeof firebaseConfig === 'undefined' || firebaseConfig.apiKey === 'YOUR_API_KEY') {
             showFeedback('Firebase is not configured yet. Please update js/firebase-config.js with your keys.', 'red');
             return;
         }
